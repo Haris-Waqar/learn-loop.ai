@@ -11,7 +11,7 @@
 
 ---
 
-## Phase 0 — Project Scaffold & Standards `[~]`
+## Phase 0 — Project Scaffold & Standards `[x]`
 
 **What gets built:**
 Next.js 14+ (App Router) project with TypeScript strict mode, ESLint, Prettier, Tailwind CSS, shadcn/ui base setup, folder structure, and environment variable config.
@@ -40,11 +40,11 @@ npm run lint    # must pass
 npm run build   # must succeed
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `npm run lint` ✓ | `npm run build` ✓ | Next.js 16.2.2 + Tailwind v4 + shadcn/ui + Prettier configured. All folder stubs created. `types/session.ts`, `lib/constants.ts`, `lib/utils/`, `lib/session/tokenCounter.ts` written.
 
 ---
 
-## Phase 1 — LangChain Foundation `[ ]`
+## Phase 1 — LangChain Foundation `[~]`
 
 **What gets built:**
 LangChain JS installed and configured. Shared LLM client (`gpt-4o-mini`). Utilities: token counter, error handler, response parser. Placeholder chain files for all 8 chains. Test script confirms LLM connectivity.
