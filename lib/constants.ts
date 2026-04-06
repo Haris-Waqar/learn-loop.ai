@@ -1,0 +1,12 @@
+export const LLM_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+export const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small';
+export const MAX_TOKENS = 4000;
+export const TOKEN_COMPRESS_THRESHOLD = 0.6; // 60%
+export const TOKEN_WARNING_THRESHOLD = 0.8; // 80%
+export const CHUNK_SIZE = 500;
+export const CHUNK_OVERLAP = 50;
+export const TOP_K_RETRIEVAL = 3;
+export const MAX_RECENT_MESSAGES = 6;
+export const SUMMARY_BULLET_COUNT = { min: 5, max: 8 };
+export const MEMORABLE_COUNT = { min: 5, max: 7 };
+export const FLASHCARD_COUNT = { min: 5, max: 10 };
