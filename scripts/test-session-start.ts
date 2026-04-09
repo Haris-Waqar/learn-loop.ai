@@ -32,8 +32,6 @@ moduleWithResolver._resolveFilename = function patchedResolveFilename(request, p
   return originalResolveFilename.call(this, request, parent, isMain, options);
 };
 
-const { POST } = require('../app/api/session/start/route') as typeof import('../app/api/session/start/route');
-
 const chemistryMaterial = `
 Today we reviewed acid-base titration curves, buffer capacity, and how the Henderson-Hasselbalch equation predicts pH changes near the equivalence point.
 We also compared strong acid versus weak acid titrations and discussed how indicator selection depends on the pH range of the steep region of the curve.
@@ -52,14 +50,18 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-async function startSession(material: string, previousSessionSummary?: string | null) {
+async function startSession(
+  postRoute: typeof import('../app/api/session/start/route').POST,
+  material: string,
+  previousSessionSummary?: string | null,
+) {
   const request = new Request('http://localhost/api/session/start', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ material, previousSessionSummary }),
   });
 
-  const response = await POST(request);
+  const response = await postRoute(request);
   const json = (await response.json()) as { success: boolean; data?: SessionState; error?: string };
 
   return { response, json };
@@ -76,7 +78,9 @@ function printSessionSnapshot(label: string, session: SessionState) {
 }
 
 async function main() {
-  const chemistryResult = await startSession(chemistryMaterial, 'Previous chemistry recap');
+  const { POST } = (await import('../app/api/session/start/route')) as typeof import('../app/api/session/start/route');
+
+  const chemistryResult = await startSession(POST, chemistryMaterial, 'Previous chemistry recap');
   assert(chemistryResult.response.ok, `Chemistry request failed: ${chemistryResult.json.error ?? 'Unknown error'}`);
   assert(chemistryResult.json.success && chemistryResult.json.data, 'Chemistry response did not include session data.');
 
@@ -90,7 +94,7 @@ async function main() {
 
   printSessionSnapshot('Chemistry session', chemistrySession);
 
-  const softwareResult = await startSession(softwareMaterial);
+  const softwareResult = await startSession(POST, softwareMaterial);
   assert(softwareResult.response.ok, `Software request failed: ${softwareResult.json.error ?? 'Unknown error'}`);
   assert(softwareResult.json.success && softwareResult.json.data, 'Software response did not include session data.');
 
@@ -106,7 +110,7 @@ async function main() {
 
   printSessionSnapshot('Software session', softwareSession);
 
-  const blankResult = await startSession('   ');
+  const blankResult = await startSession(POST, '   ');
   assert(blankResult.response.status === 400, `Expected 400 for blank material, received ${blankResult.response.status}.`);
   assert(blankResult.json.success === false, 'Blank request should fail.');
 

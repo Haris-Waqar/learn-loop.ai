@@ -107,7 +107,7 @@ npx ts-node scripts/test-session-start.ts
 
 ---
 
-## Phase 3 — SummaryChain `[ ]`
+## Phase 3 — SummaryChain `[x]`
 
 **What gets built:**
 `SummaryChain` with persona injection. `/api/session/summarize` route with streaming support.
@@ -127,7 +127,7 @@ npx ts-node scripts/test-session-start.ts
 npx ts-node scripts/test-summary.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `SummaryChain` implemented with persona-shaped bullet summarization using the shared streaming LLM client. Added `/api/session/summarize` as an SSE route that emits `chunk` events during generation and a final `complete` event with the assembled summary for client persistence. Added `scripts/test-summary.ts` to validate live streaming, final bullet count, and invalid-input handling. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-summary.ts` ✓ and `npm run build` ✓.
 
 ---
 
