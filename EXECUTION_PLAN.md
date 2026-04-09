@@ -76,14 +76,14 @@ LangChain JS installed and configured. Shared LLM client (`gpt-4o-mini`). Utilit
 npx ts-node scripts/test-llm.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `@langchain/openai`, `@langchain/core`, `@langchain/community`, and `langchain` installed and wired into the project. Shared ChatOpenAI clients added in `lib/langchain/llmClient.ts` with `gpt-4o-mini` defaulting from environment-backed constants. Core utilities implemented in `lib/session/tokenCounter.ts`, `lib/utils/errorHandler.ts`, and `lib/utils/responseParser.ts`. Placeholder chain files and `lib/langchain/vectorStore.ts` created with stable export signatures for later phases. Added `scripts/test-llm.ts` and verified OpenAI connectivity with `npx ts-node --project tsconfig.scripts.json scripts/test-llm.ts` ✓.
 
 ---
 
-## Phase 2 — Session Init Chains `[ ]`
+## Phase 2 — Session Init Chains `[x]`
 
 **What gets built:**
-`ClassifierChain` + `PersonaBuilderChain` as a SequentialChain. `/api/session/start` route that accepts material and returns classification + persona + serialized vectors.
+`ClassifierChain` + `PersonaBuilderChain` as a SequentialChain. `/api/session/start` route that accepts material and returns a full session seed including classification, persona, and serialized vectors.
 
 **Files to create/modify:**
 - `lib/langchain/chains/classifierChain.ts` (implement)
@@ -96,13 +96,14 @@ npx ts-node scripts/test-llm.ts
 - Chemistry transcript → `{ subject: "Chemistry", subtopic: "...", confidence: "high", persona: "..." }`
 - Software engineering transcript → different subject + persona returned
 - Serialized vectors returned and non-empty
+- Response payload is a client-ready `SessionState` seed
 
 **Test commands:**
 ```bash
 npx ts-node scripts/test-session-start.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `ClassifierChain` and `PersonaBuilderChain` implemented. `embedAndSerialize()` now chunks material with `RecursiveCharacterTextSplitter`, embeds with `text-embedding-3-small`, and returns serialized vectors for client persistence. `/api/session/start` returns a full `SessionState` seed, including `sessionId`, classifier output, persona, serialized vectors, and default session fields. Added `lib/session/createSessionSeed.ts` and `scripts/test-session-start.ts`. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-session-start.ts` ✓ and `npm run build` ✓. Uses `MemoryVectorStore`-compatible serialized embeddings for later Phase 4 reconstruction rather than `DocArrayInMemorySearch`, which is not present in the installed LangChain packages.
 
 ---
 
@@ -133,7 +134,7 @@ npx ts-node scripts/test-summary.ts
 ## Phase 4 — QAChain + DocArrayInMemorySearch `[ ]`
 
 **What gets built:**
-Embedding pipeline: chunk material, embed with `text-embedding-3-small`, serialize to JSON. `QAChain` reconstructs `DocArrayInMemorySearch` from serialized vectors, runs similarity search, injects top 3 chunks + conversation history into prompt. `/api/session/ask` route.
+Embedding pipeline: chunk material, embed with `text-embedding-3-small`, serialize to JSON. `QAChain` reconstructs `MemoryVectorStore` from serialized vectors, runs similarity search, injects top 3 chunks + conversation history into prompt. `/api/session/ask` route.
 
 **Files to create/modify:**
 - `lib/langchain/chains/qaChain.ts` (implement)
