@@ -13,6 +13,18 @@ function sseEvent(event: string, data: string): Uint8Array {
   return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
+function enqueueThinking(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  message: string,
+  lastMessage: string | null,
+): string {
+  if (lastMessage !== message) {
+    controller.enqueue(sseEvent('thinking', message));
+  }
+
+  return message;
+}
+
 function shouldFlushSummaryBuffer(buffer: string): boolean {
   return buffer.length >= SUMMARY_STREAM_CHUNK_SIZE || buffer.includes('\n');
 }
@@ -37,7 +49,11 @@ export async function POST(request: Request) {
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
+          let lastThinking: string | null = null;
           let pendingChunk = '';
+
+          lastThinking = enqueueThinking(controller, 'Preparing a summary', lastThinking);
+          enqueueThinking(controller, 'Generating your summary', lastThinking);
 
           for await (const chunk of summaryStream) {
             fullSummary += chunk;

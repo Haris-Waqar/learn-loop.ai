@@ -48,6 +48,16 @@ interface ParsedSseEvent<T = unknown> {
   data: T;
 }
 
+interface AskCompleteEvent {
+  intent: string;
+  updatedMessages: Message[];
+  rollingSum: string;
+  answer?: string;
+  summary?: string;
+  memorables?: string[];
+  flashcards?: { front: string; back: string }[];
+}
+
 function parseSseBuffer<T>(buffer: string): { events: ParsedSseEvent<T>[]; remainder: string } {
   const rawEvents = buffer.split('\n\n');
   const completeEvents = rawEvents.slice(0, -1);
@@ -118,7 +128,7 @@ async function ask(
   recentMessages: Message[],
   rollingSum: string,
   question: string,
-) {
+): Promise<{ thinkingEvents: ParsedSseEvent<string>[]; complete: AskCompleteEvent }> {
   const response = await postRoute(
     new Request('http://localhost/api/session/ask', {
       method: 'POST',
@@ -139,10 +149,14 @@ async function ask(
   );
 
   assert(response.ok, `Ask route failed with status ${response.status}.`);
-  const events = await collectSseEvents<Record<string, unknown>>(response);
-  const completeEvent = events.find((event) => event.event === 'complete');
+  const events = await collectSseEvents<AskCompleteEvent | string>(response);
+  const thinkingEvents = events.filter((event): event is ParsedSseEvent<string> => event.event === 'thinking');
+  const completeEvent = events.find((event): event is ParsedSseEvent<AskCompleteEvent> => event.event === 'complete');
   assert(completeEvent, 'Expected a complete event.');
-  return completeEvent.data;
+  return {
+    thinkingEvents,
+    complete: completeEvent.data,
+  };
 }
 
 async function main() {
@@ -154,17 +168,25 @@ async function main() {
   let rollingSum = session.rollingSum;
 
   const qa = await ask(askPOST, session, recentMessages, rollingSum, 'Explain the Calvin cycle.');
-  assert(qa.intent === 'qa', 'Expected QA intent for explanation prompt.');
-  assert(typeof qa.answer === 'string', 'Expected QA answer payload.');
-  recentMessages = qa.updatedMessages as Message[];
-  rollingSum = qa.rollingSum as string;
+  assert(qa.complete.intent === 'qa', 'Expected QA intent for explanation prompt.');
+  assert(typeof qa.complete.answer === 'string', 'Expected QA answer payload.');
+  assert(
+    qa.thinkingEvents.some((event) => event.data === 'Generating your answer'),
+    'Expected QA flow to emit answer-generation thinking.',
+  );
+  recentMessages = qa.complete.updatedMessages as Message[];
+  rollingSum = qa.complete.rollingSum as string;
 
   const summary = await ask(askPOST, session, recentMessages, rollingSum, 'Summarize this session.');
-  assert(summary.intent === 'summarize', 'Expected summarize intent.');
-  assert(typeof summary.summary === 'string' && summary.summary.length > 0, 'Expected summary payload.');
-  session.summary = summary.summary as string;
-  recentMessages = summary.updatedMessages as Message[];
-  rollingSum = summary.rollingSum as string;
+  assert(summary.complete.intent === 'summarize', 'Expected summarize intent.');
+  assert(typeof summary.complete.summary === 'string' && summary.complete.summary.length > 0, 'Expected summary payload.');
+  assert(
+    summary.thinkingEvents.some((event) => event.data === 'Preparing a summary'),
+    'Expected summarize intent to emit summary-oriented thinking.',
+  );
+  session.summary = summary.complete.summary as string;
+  recentMessages = summary.complete.updatedMessages as Message[];
+  rollingSum = summary.complete.rollingSum as string;
 
   const memorables = await ask(
     askPOST,
@@ -173,24 +195,46 @@ async function main() {
     rollingSum,
     'Give me the key things to remember from this topic.',
   );
-  assert(memorables.intent === 'memorables', 'Expected memorables intent.');
-  assert(Array.isArray(memorables.memorables) && memorables.memorables.length >= 5, 'Expected memorables payload.');
-  recentMessages = memorables.updatedMessages as Message[];
-  rollingSum = memorables.rollingSum as string;
+  assert(memorables.complete.intent === 'memorables', 'Expected memorables intent.');
+  assert(
+    Array.isArray(memorables.complete.memorables) && memorables.complete.memorables.length >= 5,
+    'Expected memorables payload.',
+  );
+  assert(
+    memorables.thinkingEvents.some((event) => event.data === 'Generating your key takeaways'),
+    'Expected memorables intent to emit key-takeaways thinking.',
+  );
+  recentMessages = memorables.complete.updatedMessages as Message[];
+  rollingSum = memorables.complete.rollingSum as string;
 
-  session.memorables = memorables.memorables as string[];
+  session.memorables = memorables.complete.memorables as string[];
 
   const flashcards = await ask(askPOST, session, recentMessages, rollingSum, 'Make flashcards from this.');
-  assert(flashcards.intent === 'flashcards', 'Expected flashcards intent.');
-  assert(Array.isArray(flashcards.flashcards) && flashcards.flashcards.length >= 5, 'Expected flashcards payload.');
-  recentMessages = flashcards.updatedMessages as Message[];
-  rollingSum = flashcards.rollingSum as string;
+  assert(flashcards.complete.intent === 'flashcards', 'Expected flashcards intent.');
+  assert(
+    Array.isArray(flashcards.complete.flashcards) && flashcards.complete.flashcards.length >= 5,
+    'Expected flashcards payload.',
+  );
+  assert(
+    flashcards.thinkingEvents.some((event) => event.data === 'Generating your flashcards'),
+    'Expected flashcards intent to emit flashcard-generation thinking.',
+  );
+  recentMessages = flashcards.complete.updatedMessages as Message[];
+  rollingSum = flashcards.complete.rollingSum as string;
 
   const ambiguous = await ask(askPOST, session, recentMessages, rollingSum, 'Can you help with this topic?');
-  assert(ambiguous.intent === 'qa', 'Ambiguous prompt should default to qa.');
+  assert(ambiguous.complete.intent === 'qa', 'Ambiguous prompt should default to qa.');
+  assert(
+    recentMessages.some((message) => /Generated \d+ flashcards/.test(message.content)),
+    'Expected compact assistant status messages for non-QA intents.',
+  );
   assert(
     recentMessages.every((message) => message.content.length < 200),
     'Non-QA intents should add compact assistant status messages rather than structured payloads.',
+  );
+  assert(
+    qa.thinkingEvents.some((event) => event.data === 'Classifying your request'),
+    'Expected thinking events to include intent classification.',
   );
 
   console.log('\nInput');
@@ -198,11 +242,11 @@ async function main() {
   console.log(`- Intent prompts: qa, summarize, memorables, flashcards, ambiguous`);
 
   console.log('\nIntent dispatch results');
-  console.log(`- Explain the Calvin cycle. -> ${qa.intent}`);
-  console.log(`- Summarize this session. -> ${summary.intent}`);
-  console.log(`- Give me the key things to remember from this topic. -> ${memorables.intent}`);
-  console.log(`- Make flashcards from this. -> ${flashcards.intent}`);
-  console.log(`- Can you help with this topic? -> ${ambiguous.intent}`);
+  console.log(`- Explain the Calvin cycle. -> ${qa.complete.intent}`);
+  console.log(`- Summarize this session. -> ${summary.complete.intent}`);
+  console.log(`- Give me the key things to remember from this topic. -> ${memorables.complete.intent}`);
+  console.log(`- Make flashcards from this. -> ${flashcards.complete.intent}`);
+  console.log(`- Can you help with this topic? -> ${ambiguous.complete.intent}`);
   console.log(`- Rolling summary length after mixed intents: ${rollingSum.length}`);
 
   console.log('\n✓ Phase 8.5 intent-routing test passed.');

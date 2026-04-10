@@ -328,6 +328,63 @@ npm run build
 
 ---
 
+## Phase 8.6 — Thinking Events for Streaming UX `[x]`
+
+**What gets built:**
+User-centric `thinking` SSE events for `/api/session/ask` and `/api/session/summarize` so the UI can show progress like “Classifying your request” or “Generating your flashcards” without exposing hidden reasoning.
+
+**Files to create/modify:**
+- `app/api/session/ask/route.ts`
+- `app/api/session/summarize/route.ts`
+- `scripts/test-summary.ts`
+- `scripts/test-qa.ts`
+- `scripts/test-intent-ask.ts`
+
+**Public interface changes:**
+- `POST /api/session/ask` SSE adds optional `thinking` events with plain-string payloads
+- `POST /api/session/summarize` SSE adds optional `thinking` events with plain-string payloads
+- Existing `chunk`, `complete`, and `error` events stay unchanged
+
+**Thinking message rules:**
+- Use `event: thinking`
+- Payload is a user-facing string only
+- Do not emit duplicate adjacent messages
+- Do not expose chain names, retrieval jargon, or hidden reasoning
+
+**Expected messages:**
+- Before intent classification:
+  - `Classifying your request`
+- For `qa`:
+  - `Looking through your study material`
+  - `Generating your answer`
+  - if compression runs: `Saving room for more conversation`
+- For `summarize`:
+  - `Preparing a summary`
+  - `Generating your summary`
+- For `memorables`:
+  - `Generating your key takeaways`
+- For `flashcards`:
+  - `Generating your flashcards`
+
+**Acceptance criteria:**
+- `thinking` events arrive before `complete`
+- QA flow emits user-facing progress text for classification, retrieval, and answer generation
+- Summary flow emits user-facing progress text before summary chunks
+- Intent-routed memorables and flashcards emit the expected user-facing progress messages
+- No hidden reasoning or developer-centric wording appears in the stream
+
+**Test commands:**
+```bash
+npx ts-node scripts/test-summary.ts
+npx ts-node scripts/test-qa.ts
+npx ts-node scripts/test-intent-ask.ts
+npm run build
+```
+
+**Completion notes:** Added user-centric `thinking` SSE events to `/api/session/ask` and `/api/session/summarize` so the UI can display progress messages like “Classifying your request”, “Looking through your study material”, and “Generating your flashcards” without exposing hidden reasoning or developer-centric chain names. The ask route now emits intent-specific `thinking` events before major user-visible steps, and the summarize route emits summary-oriented `thinking` events before streaming chunks. Updated `scripts/test-summary.ts`, `scripts/test-qa.ts`, and `scripts/test-intent-ask.ts` to assert `thinking` event presence, ordering, and wording. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-summary.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-qa.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-intent-ask.ts` ✓, and `npm run build` ✓.
+
+---
+
 ## Phase 9 — Minimal UI (Functional, Not Polished) `[ ]`
 
 **What gets built:**

@@ -51,6 +51,18 @@ function sseEvent(event: string, data: unknown): Uint8Array {
   return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
+function enqueueThinking(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  message: string,
+  lastMessage: string | null,
+): string {
+  if (lastMessage !== message) {
+    controller.enqueue(sseEvent('thinking', message));
+  }
+
+  return message;
+}
+
 function shouldFlushBuffer(buffer: string, chunkSize: number): boolean {
   return buffer.length >= chunkSize || buffer.includes('\n');
 }
@@ -222,7 +234,12 @@ export async function POST(request: Request) {
     const readableStream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
+          let lastThinking: string | null = null;
+
+          lastThinking = enqueueThinking(controller, 'Classifying your request', lastThinking);
+
           if (intentResult.intent === 'qa') {
+            lastThinking = enqueueThinking(controller, 'Looking through your study material', lastThinking);
             const { stream, retrievedChunks } = await streamQAAnswerText({
               question,
               persona,
@@ -235,6 +252,7 @@ export async function POST(request: Request) {
               currentSubtopic,
               userMessage: question,
             });
+            lastThinking = enqueueThinking(controller, 'Generating your answer', lastThinking);
             const answer = await streamTextIntoSse(controller, stream, QA_STREAM_CHUNK_SIZE);
 
             if (answer.length === 0) {
@@ -242,6 +260,9 @@ export async function POST(request: Request) {
             }
 
             const nextMessages = buildUpdatedMessages(recentMessages, question, answer, 'answer');
+            if (shouldCompress(estimateTokens(rollingSum.trim()) + estimateMessagesTokens(nextMessages)) && nextMessages.length >= 4) {
+              lastThinking = enqueueThinking(controller, 'Saving room for more conversation', lastThinking);
+            }
             const compressed = await applyCompressionToMessages(rollingSum, nextMessages);
             const topicShift = await topicShiftPromise;
 
@@ -268,7 +289,9 @@ export async function POST(request: Request) {
           }
 
           if (intentResult.intent === 'summarize') {
+            lastThinking = enqueueThinking(controller, 'Preparing a summary', lastThinking);
             const summaryStream = await streamSummaryText({ material, persona });
+            lastThinking = enqueueThinking(controller, 'Generating your summary', lastThinking);
             const summaryText = await streamTextIntoSse(controller, summaryStream, SUMMARY_STREAM_CHUNK_SIZE);
 
             if (summaryText.length === 0) {
@@ -300,6 +323,7 @@ export async function POST(request: Request) {
           }
 
           if (intentResult.intent === 'memorables') {
+            lastThinking = enqueueThinking(controller, 'Generating your key takeaways', lastThinking);
             const { memorables: generatedMemorables } = await runMemorableChain({
               material,
               summary,
@@ -331,6 +355,7 @@ export async function POST(request: Request) {
             return;
           }
 
+          enqueueThinking(controller, 'Generating your flashcards', lastThinking);
           const { flashcards } = await runFlashcardChain({
             material,
             summary,

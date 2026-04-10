@@ -162,13 +162,31 @@ async function askQuestion(
   );
 
   const events = await collectSseEvents<string | QACompleteEvent>(response);
+  const thinkingEvents = events.filter((event) => event.event === 'thinking');
   const chunkEvents = events.filter((event) => event.event === 'chunk');
   const completeEvent = events.find((event) => event.event === 'complete');
   const errorEvent = events.find((event) => event.event === 'error');
 
   assert(!errorEvent, `Unexpected SSE error event: ${String(errorEvent?.data ?? 'unknown error')}`);
+  assert(thinkingEvents.length > 0, 'Expected thinking events before the answer stream.');
+  assert(
+    events.findIndex((event) => event.event === 'thinking') < events.findIndex((event) => event.event === 'complete'),
+    'Expected thinking events to arrive before the complete event.',
+  );
   assert(chunkEvents.length > 0, 'Expected at least one answer chunk.');
   assert(completeEvent, 'Expected a complete event.');
+  assert(
+    thinkingEvents.some((event) => event.data === 'Classifying your request'),
+    'Expected QA flow to emit intent-classification thinking.',
+  );
+  assert(
+    thinkingEvents.some((event) => event.data === 'Looking through your study material'),
+    'Expected QA flow to emit retrieval-oriented thinking.',
+  );
+  assert(
+    thinkingEvents.some((event) => event.data === 'Generating your answer'),
+    'Expected QA flow to emit answer-generation thinking.',
+  );
 
   return {
     chunkCount: chunkEvents.length,

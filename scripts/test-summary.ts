@@ -121,13 +121,23 @@ async function main() {
   );
 
   const events = await collectSseEvents(response);
+  const thinkingEvents = events.filter((event) => event.event === 'thinking');
   const chunkEvents = events.filter((event) => event.event === 'chunk');
   const completeEvent = events.find((event) => event.event === 'complete');
   const errorEvent = events.find((event) => event.event === 'error');
 
   assert(!errorEvent, `Unexpected SSE error event: ${errorEvent?.data ?? 'unknown error'}`);
+  assert(thinkingEvents.length > 0, 'Expected at least one thinking event before completion.');
   assert(chunkEvents.length > 0, 'Expected at least one chunk event before completion.');
   assert(completeEvent, 'Expected a complete event.');
+  assert(
+    events.findIndex((event) => event.event === 'thinking') < events.findIndex((event) => event.event === 'complete'),
+    'Expected thinking events to arrive before the complete event.',
+  );
+  assert(
+    thinkingEvents.some((event) => event.data === 'Preparing a summary' || event.data === 'Generating your summary'),
+    'Expected user-centric summary thinking events.',
+  );
 
   const summary = completeEvent.data;
   const bullets = parseBulletList(summary);
@@ -135,8 +145,14 @@ async function main() {
   assert(bullets.length >= 5 && bullets.length <= 8, `Expected 5-8 bullets, received ${bullets.length}.`);
 
   console.log('\nSSE event counts');
+  console.log(`- thinking: ${thinkingEvents.length}`);
   console.log(`- chunk: ${chunkEvents.length}`);
   console.log(`- complete: ${completeEvent ? 1 : 0}`);
+
+  console.log('\nThinking events');
+  thinkingEvents.forEach((event, index) => {
+    console.log(`- ${index + 1}. ${event.data}`);
+  });
 
   console.log('\nFinal summary');
   console.log(summary);
