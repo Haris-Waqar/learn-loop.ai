@@ -1,12 +1,17 @@
 import { MAX_RECENT_MESSAGES, QA_STREAM_CHUNK_SIZE } from '@/lib/constants';
+import { runCompressorChain } from '@/lib/langchain/chains/compressorChain';
 import { streamQAAnswerText } from '@/lib/langchain/chains/qaChain';
+import { runTopicShiftChain } from '@/lib/langchain/chains/topicShiftChain';
 import { estimateMessagesTokens, estimateTokens } from '@/lib/session/tokenCounter';
+import { shouldCompress, shouldWarn } from '@/lib/session/tokenCounter';
 import { AppError, toSafeError } from '@/lib/utils/errorHandler';
 import type { Message, SerializedVector } from '@/types/session';
 
 interface AskRequestBody {
   question?: unknown;
   persona?: unknown;
+  currentSubject?: unknown;
+  currentSubtopic?: unknown;
   recentMessages?: unknown;
   rollingSum?: unknown;
   serializedVectors?: unknown;
@@ -54,6 +59,8 @@ export async function POST(request: Request) {
     const body = (await request.json()) as AskRequestBody;
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     const persona = typeof body.persona === 'string' ? body.persona.trim() : '';
+    const currentSubject = typeof body.currentSubject === 'string' ? body.currentSubject.trim() : '';
+    const currentSubtopic = typeof body.currentSubtopic === 'string' ? body.currentSubtopic.trim() : '';
     const rollingSum = typeof body.rollingSum === 'string' ? body.rollingSum : '';
     const recentMessages = Array.isArray(body.recentMessages) ? body.recentMessages : [];
     const serializedVectors = Array.isArray(body.serializedVectors) ? body.serializedVectors : [];
@@ -64,6 +71,10 @@ export async function POST(request: Request) {
 
     if (persona.length === 0) {
       throw new AppError('Persona is required.', 400);
+    }
+
+    if (currentSubject.length === 0 || currentSubtopic.length === 0) {
+      throw new AppError('currentSubject and currentSubtopic are required.', 400);
     }
 
     if (!recentMessages.every(isValidMessage)) {
@@ -80,6 +91,11 @@ export async function POST(request: Request) {
       recentMessages,
       rollingSum,
       serializedVectors,
+    });
+    const topicShiftPromise = runTopicShiftChain({
+      currentSubject,
+      currentSubtopic,
+      userMessage: question,
     });
 
     const readableStream = new ReadableStream<Uint8Array>({
@@ -114,14 +130,34 @@ export async function POST(request: Request) {
             { role: 'assistant' as const, content: normalizedAnswer, type: 'answer' as const, timestamp: now + 1 },
           ].slice(-MAX_RECENT_MESSAGES);
 
-          const tokenCount = estimateTokens(rollingSum) + estimateMessagesTokens(updatedMessages);
+          let nextRollingSum = rollingSum.trim();
+          let nextUpdatedMessages = updatedMessages;
+          let tokenCount = estimateTokens(nextRollingSum) + estimateMessagesTokens(nextUpdatedMessages);
+          let compressionApplied = false;
+
+          if (shouldCompress(tokenCount) && nextUpdatedMessages.length >= 4) {
+            const messagesToCompress = nextUpdatedMessages.slice(0, 4);
+            const remainingMessages = nextUpdatedMessages.slice(4);
+            const { summaryChunk } = await runCompressorChain({ messages: messagesToCompress });
+
+            nextRollingSum = nextRollingSum.length > 0 ? `${nextRollingSum} ${summaryChunk}` : summaryChunk;
+            nextUpdatedMessages = remainingMessages;
+            tokenCount = estimateTokens(nextRollingSum) + estimateMessagesTokens(nextUpdatedMessages);
+            compressionApplied = true;
+          }
+
+          const topicShift = await topicShiftPromise;
 
           controller.enqueue(
             sseEvent('complete', {
               answer: normalizedAnswer,
-              updatedMessages,
+              updatedMessages: nextUpdatedMessages,
               tokenCount,
               retrievedChunks,
+              topicShift,
+              rollingSum: nextRollingSum,
+              compressionApplied,
+              shouldWarn: shouldWarn(tokenCount),
             }),
           );
           controller.close();

@@ -156,7 +156,7 @@ npx ts-node scripts/test-qa.ts
 
 ---
 
-## Phase 5 — TopicShiftChain `[ ]`
+## Phase 5 — TopicShiftChain `[x]`
 
 **What gets built:**
 `TopicShiftChain` that detects when user question leaves the current subject. Runs in parallel inside `/api/session/ask`. Returns `{ shifted: boolean, newSubject: string | null }`.
@@ -176,11 +176,11 @@ npx ts-node scripts/test-qa.ts
 npx ts-node scripts/test-topic-shift.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `TopicShiftChain` implemented with conservative JSON classification against the active `currentSubject`, `currentSubtopic`, and incoming user message. `/api/session/ask` now requires `currentSubject` and `currentSubtopic`, runs topic-shift detection in parallel with QA generation, and includes `topicShift` in the final SSE `complete` payload. Added `scripts/test-topic-shift.ts` to verify both direct chain behavior and off-topic detection through the ask route. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-topic-shift.ts` ✓.
 
 ---
 
-## Phase 6 — CompressorChain `[ ]`
+## Phase 6 — CompressorChain `[x]`
 
 **What gets built:**
 `CompressorChain` that summarises a list of messages into 2–3 sentences. `/api/session/compress` route.
@@ -200,11 +200,11 @@ npx ts-node scripts/test-topic-shift.ts
 npx ts-node scripts/test-compress.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `CompressorChain` implemented to condense message batches into a short 2–3 sentence summary chunk while preserving key questions, facts, and conclusions. Added `/api/session/compress` as a buffered JSON route, then wired the same compressor into `/api/session/ask` so old messages are automatically summarized into `rollingSum` when the token threshold is crossed. The ask route now returns `rollingSum`, `compressionApplied`, and `shouldWarn` in the final `complete` event. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-compress.ts` ✓.
 
 ---
 
-## Phase 7 — MemorableChain + FlashcardChain `[ ]`
+## Phase 7 — MemorableChain + FlashcardChain `[x]`
 
 **What gets built:**
 `MemorableChain` extracts 5–7 context-aware key points. `FlashcardChain` uses `StructuredOutputParser` + `ResponseSchema` to return typed `[{ front, back }]` JSON. Both routes built and tested.
@@ -228,7 +228,7 @@ npx ts-node scripts/test-memorables.ts
 npx ts-node scripts/test-flashcards.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `MemorableChain` and `FlashcardChain` implemented as context-aware study modes that use `material`, optional `summary`, prior conversation, `rollingSum`, and persona rather than raw material alone. Added `/api/session/memorables` and `/api/session/flashcards` as JSON routes, with flashcards validated through `StructuredOutputParser` and a strict array-of-cards schema. Added `scripts/test-memorables.ts` and `scripts/test-flashcards.ts` to verify distinct memorables and valid typed flashcard output. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-memorables.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-flashcards.ts` ✓, and `npm run build` ✓.
 
 ---
 
@@ -250,6 +250,78 @@ npx ts-node scripts/test-flashcards.ts
 **Test commands:**
 ```bash
 npx ts-node scripts/test-handoff.ts
+```
+
+**Completion notes:** _(fill in after done)_
+
+---
+
+## Phase 8.5 — Intent Classification Inside Chat `[ ]`
+
+**What gets built:**
+An intent-routing layer inside `/api/session/ask` so normal chat messages can trigger `QAChain`, `SummaryChain`, `MemorableChain`, or `FlashcardChain` automatically. The existing specialized routes remain available for direct UI actions and isolated testing.
+
+**Files to create/modify:**
+- `lib/langchain/chains/intentClassifierChain.ts` (implement)
+- `app/api/session/ask/route.ts` (extend to classify intent, dispatch by intent, and return intent-aware SSE payloads)
+- `scripts/test-intent-ask.ts`
+
+**Request contract changes:**
+- Extend `POST /api/session/ask` to accept:
+  - `question: string`
+  - `material: string`
+  - `summary: string | null`
+  - `memorables: string[]`
+  - `persona: string`
+  - `currentSubject: string`
+  - `currentSubtopic: string`
+  - `recentMessages: Message[]`
+  - `rollingSum: string`
+  - `serializedVectors: SerializedVector[]`
+
+**What the intent classifier returns:**
+- `{ intent: "qa" | "summarize" | "memorables" | "flashcards", confidence: "low" | "medium" | "high" }`
+
+**Routing behavior:**
+- `qa` → existing retrieval-backed Q&A flow
+- `summarize` → `SummaryChain`
+- `memorables` → `MemorableChain`
+- `flashcards` → `FlashcardChain`
+- ambiguous input defaults to `qa`
+
+**SSE response changes for `/api/session/ask`:**
+- final `complete` event must always include:
+  - `intent`
+  - `intentConfidence`
+  - `updatedMessages`
+  - `rollingSum`
+  - `tokenCount`
+  - `compressionApplied`
+  - `shouldWarn`
+- intent-specific fields:
+  - `qa` → `answer`, `retrievedChunks`, `topicShift`
+  - `summarize` → `summary`
+  - `memorables` → `memorables`
+  - `flashcards` → `flashcards`
+
+**Chat history behavior:**
+- Append the user prompt as a normal `user` message
+- For non-QA intents, append a compact assistant status message instead of the full structured output
+- Keep structured outputs in session state fields, not embedded verbatim into `recentMessages`
+
+**Acceptance criteria:**
+- “Explain the Calvin cycle” routes to `qa`
+- “Summarize this session” routes to `summarize`
+- “Give me the key things to remember” routes to `memorables`
+- “Make flashcards from this” routes to `flashcards`
+- Ambiguous prompts default to `qa`
+- Non-QA intents do not bloat `recentMessages`
+- Existing direct routes still work unchanged
+
+**Test commands:**
+```bash
+npx ts-node scripts/test-intent-ask.ts
+npm run build
 ```
 
 **Completion notes:** _(fill in after done)_
