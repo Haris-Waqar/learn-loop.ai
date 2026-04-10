@@ -258,6 +258,142 @@ Not every build failure in this repo is an implementation problem. Some are envi
 
 ---
 
+## Q9. Why does `embedAndSerialize()` run at session start instead of waiting for `SummaryChain` first?
+
+### Context
+
+There was a natural question during Phase 2:
+- if the app is going to produce a summary anyway, why not wait for the summary and embed that instead of embedding the raw material up front?
+
+### Answer
+
+Because retrieval and summary serve different purposes.
+
+The summary is a compressed study artifact.
+
+The embeddings are the searchable memory of the original source material.
+
+If LearnLoop waited for `SummaryChain` first:
+- Q&A would be blocked until the user explicitly ran summary
+- retrieval quality would drop because a compressed summary removes details that later questions may depend on
+
+### Decision
+
+Run `embedAndSerialize()` during session initialization on the raw `material`, not on the later summary output.
+
+### Why this was the correct decision
+
+- it prepares retrieval state immediately at session start
+- it keeps `SummaryChain` optional as a study action
+- it preserves fine-grained source details for later Q&A
+
+### Repo impact
+
+The route comment in [`app/api/session/start/route.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/app/api/session/start/route.ts) and the helper comment in [`lib/langchain/vectorStore.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/lib/langchain/vectorStore.ts) were updated to make this distinction explicit.
+
+---
+
+## Q10. How does SSE work in LearnLoop’s summary route?
+
+### Context
+
+Phase 3 introduced streaming for `/api/session/summarize`, and the question came up: what exactly is being streamed, and how should the client think about it?
+
+### Answer
+
+SSE in LearnLoop is a long-lived HTTP response where the server keeps sending event frames instead of returning one final JSON payload.
+
+The route streams events in this form:
+- `event: chunk` with incremental text
+- `event: complete` with the fully assembled summary
+- `event: error` if generation fails after streaming has started
+
+### Why this structure was chosen
+
+- the UI can render summary text incrementally
+- the client does not need to guess when generation is done
+- the client can persist `session.summary` directly from the `complete` event
+
+### Decision
+
+Use SSE for Phase 3 instead of a buffered JSON response.
+
+### Repo impact
+
+This behavior is implemented in [`app/api/session/summarize/route.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/app/api/session/summarize/route.ts) and verified in [`scripts/test-summary.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/scripts/test-summary.ts).
+
+---
+
+## Q11. Can chunk size be controlled during summary streaming?
+
+### Context
+
+After Phase 3 was implemented, the summary test showed many very small `chunk` events because the route was forwarding provider/model fragments almost one-to-one.
+
+### Answer
+
+Yes, but only at the SSE layer.
+
+The raw model streaming boundaries are determined by the provider and LangChain. Those token fragments are not directly controllable.
+
+What LearnLoop can control is how those model fragments are grouped before they are emitted as SSE events.
+
+### Decision
+
+Buffer streamed summary text inside the route and flush it when:
+- the buffer reaches a configured character threshold
+- or a newline appears
+
+This produces fewer, more stable chunks for the UI without changing the final summary content.
+
+### Why this was the correct decision
+
+- it keeps provider streaming untouched
+- it makes the client stream easier to render and debug
+- it reduces noisy token-fragment updates
+- it keeps the final `complete` event contract unchanged
+
+### Repo impact
+
+A new constant was added:
+- `SUMMARY_STREAM_CHUNK_SIZE` in [`lib/constants.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/lib/constants.ts)
+
+The SSE buffering logic was added in:
+- [`app/api/session/summarize/route.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/app/api/session/summarize/route.ts)
+
+### Verification result
+
+Before buffering, the summary stream test observed roughly 120 `chunk` events.
+
+After buffering, the same test observed 7 `chunk` events and still ended with a valid `complete` event.
+
+---
+
+## What Was Implemented in Phase 3
+
+### Chains and helpers
+
+- [`summaryChain.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/lib/langchain/chains/summaryChain.ts)
+- [`lib/constants.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/lib/constants.ts) for `SUMMARY_STREAM_CHUNK_SIZE`
+
+### Route
+
+- [`app/api/session/summarize/route.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/app/api/session/summarize/route.ts)
+
+### Test harness
+
+- [`scripts/test-summary.ts`](/Users/haris/Documents/AI%20Projects/LearnLoop%20AI/learnloop.ai/scripts/test-summary.ts)
+
+### Key behaviors
+
+- validates non-empty `material` and `persona`
+- streams summary text as SSE `chunk` events
+- emits a final `complete` event with the full summary
+- uses the persona to shape tone and framing
+- buffers provider fragments into larger SSE chunks before sending them to the client
+
+---
+
 ## What Was Implemented in Phase 2
 
 ### Chains and helpers
@@ -293,11 +429,14 @@ The following were verified during implementation:
 - software-engineering input produced a different classification and persona
 - serialized vectors were returned and non-empty
 - empty material returned `400`
+- summary streaming produced incremental SSE output with a final `complete` event
+- buffered SSE chunking reduced the number of summary `chunk` events while preserving the final summary
 - production build passed
 
 The execution plan was updated to reflect:
 - Phase 1 completion notes
 - Phase 2 completion
+- Phase 3 completion
 - the shift from `DocArrayInMemorySearch` wording to `MemoryVectorStore` compatibility
 
 ---
