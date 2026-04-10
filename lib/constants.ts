@@ -9,5 +9,6 @@ export const TOP_K_RETRIEVAL = 3;
 export const MAX_RECENT_MESSAGES = 6;
 export const SUMMARY_BULLET_COUNT = { min: 5, max: 8 };
 export const SUMMARY_STREAM_CHUNK_SIZE = 120;
+export const QA_STREAM_CHUNK_SIZE = 120;
 export const MEMORABLE_COUNT = { min: 5, max: 7 };
 export const FLASHCARD_COUNT = { min: 5, max: 10 };

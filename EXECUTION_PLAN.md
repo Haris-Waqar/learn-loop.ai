@@ -131,10 +131,10 @@ npx ts-node scripts/test-summary.ts
 
 ---
 
-## Phase 4 — QAChain + DocArrayInMemorySearch `[ ]`
+## Phase 4 — QAChain + MemoryVectorStore `[x]`
 
 **What gets built:**
-Embedding pipeline: chunk material, embed with `text-embedding-3-small`, serialize to JSON. `QAChain` reconstructs `MemoryVectorStore` from serialized vectors, runs similarity search, injects top 3 chunks + conversation history into prompt. `/api/session/ask` route.
+`QAChain` reconstructs `MemoryVectorStore` from serialized vectors, runs similarity search over the original material chunks, and injects the top 3 retrieved chunks plus conversation history into the prompt. `/api/session/ask` route.
 
 **Files to create/modify:**
 - `lib/langchain/chains/qaChain.ts` (implement)
@@ -152,7 +152,7 @@ Embedding pipeline: chunk material, embed with `text-embedding-3-small`, seriali
 npx ts-node scripts/test-qa.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `reconstructVectorStore()` now rebuilds `MemoryVectorStore` from client-persisted serialized vectors. `QAChain` retrieves the top source chunks, injects persona + rolling context + recent messages into the prompt, and supports reusable streamed answer generation. Added `/api/session/ask` as an SSE route that emits buffered `chunk` events and a final `complete` event containing `answer`, `updatedMessages`, `tokenCount`, and `retrievedChunks`. Added `scripts/test-qa.ts` to verify three-step follow-up conversation behavior, retrieval relevance, message trimming, and invalid-input handling. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-qa.ts` ✓ and `npm run build` ✓.
 
 ---
 

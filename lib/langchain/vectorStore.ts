@@ -7,8 +7,10 @@
 import type { SerializedVector } from '@/types/session';
 import { CHUNK_OVERLAP, CHUNK_SIZE, EMBEDDING_MODEL } from '@/lib/constants';
 import { AppError } from '@/lib/utils/errorHandler';
+import { Document } from '@langchain/core/documents';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 
 const embeddings = new OpenAIEmbeddings({
   apiKey: process.env.OPENAI_API_KEY,
@@ -54,7 +56,7 @@ export async function embedAndSerialize(material: string): Promise<SerializedVec
 
   // Batch embedding keeps the serialized payload aligned with the generated chunk order.
   // It embeds all chunks in one API call, which is more efficient than embedding each chunk separately.
-    const vectors = await embeddings.embedDocuments(documents.map((document) => document.pageContent));
+  const vectors = await embeddings.embedDocuments(documents.map((document) => document.pageContent));
 
   return documents.map((document, index) => ({
     pageContent: document.pageContent,
@@ -70,8 +72,39 @@ export async function embedAndSerialize(material: string): Promise<SerializedVec
 // This method is reserved for Phase 4, where serialized vectors from localStorage
 // will be turned back into an in-memory retriever for similarity search during Q&A.
 export async function reconstructVectorStore(
-  _serializedVectors: SerializedVector[],
-): Promise<unknown> {
-  // Phase 4 implementation — returns a MemoryVectorStore-compatible instance
-  throw new Error('reconstructVectorStore not yet implemented');
+  serializedVectors: SerializedVector[],
+): Promise<MemoryVectorStore> {
+  if (!Array.isArray(serializedVectors) || serializedVectors.length === 0) {
+    throw new AppError('Serialized vectors are required to reconstruct retrieval state.', 400);
+  }
+
+  const invalidVector = serializedVectors.find(
+    (vector) =>
+      !vector ||
+      typeof vector.pageContent !== 'string' ||
+      !Array.isArray(vector.embedding) ||
+      typeof vector.metadata !== 'object' ||
+      vector.metadata === null,
+  );
+
+  if (invalidVector) {
+    throw new AppError('Serialized vectors are malformed.', 400);
+  }
+
+  // Rebuild the in-memory retriever from the client-persisted chunk texts and embeddings.
+  const vectorStore = await MemoryVectorStore.fromExistingIndex(embeddings);
+  const documents = serializedVectors.map(
+    (vector) =>
+      new Document({
+        pageContent: vector.pageContent,
+        metadata: vector.metadata,
+      }),
+  );
+
+  await vectorStore.addVectors(
+    serializedVectors.map((vector) => vector.embedding),
+    documents,
+  );
+
+  return vectorStore;
 }
