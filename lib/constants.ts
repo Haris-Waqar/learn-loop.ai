@@ -12,3 +12,4 @@ export const SUMMARY_STREAM_CHUNK_SIZE = 120;
 export const QA_STREAM_CHUNK_SIZE = 120;
 export const MEMORABLE_COUNT = { min: 5, max: 7 };
 export const FLASHCARD_COUNT = { min: 5, max: 10 };
+export const HANDOFF_BULLET_COUNT = { min: 3, max: 5 };

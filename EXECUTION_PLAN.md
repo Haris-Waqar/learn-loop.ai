@@ -232,7 +232,7 @@ npx ts-node scripts/test-flashcards.ts
 
 ---
 
-## Phase 8 — HandoffChain + Session End `[ ]`
+## Phase 8 — HandoffChain + Session End `[x]`
 
 **What gets built:**
 `HandoffChain` compresses the full session into a 3–5 bullet handoff summary. `/api/session/handoff` route.
@@ -252,11 +252,11 @@ npx ts-node scripts/test-flashcards.ts
 npx ts-node scripts/test-handoff.ts
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** `HandoffChain` implemented to turn the active study context into a concise 3–5 bullet handoff summary using original material, optional summary, rolling compressed context, recent verbatim messages, and persona. Added `/api/session/handoff` as an output-only JSON route returning `{ handoffSummary }` without mutating server state. Added `scripts/test-handoff.ts` to verify bullet count, word-count limit, topic coverage, and invalid-input handling. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-handoff.ts` ✓ and `npm run build` ✓.
 
 ---
 
-## Phase 8.5 — Intent Classification Inside Chat `[ ]`
+## Phase 8.5 — Intent Classification Inside Chat `[x]`
 
 **What gets built:**
 An intent-routing layer inside `/api/session/ask` so normal chat messages can trigger `QAChain`, `SummaryChain`, `MemorableChain`, or `FlashcardChain` automatically. The existing specialized routes remain available for direct UI actions and isolated testing.
@@ -324,7 +324,7 @@ npx ts-node scripts/test-intent-ask.ts
 npm run build
 ```
 
-**Completion notes:** _(fill in after done)_
+**Completion notes:** Added `IntentClassifierChain` and extended `/api/session/ask` into an SSE-based multi-intent dispatcher for `qa`, `summarize`, `memorables`, and `flashcards`. The ask route now accepts `material`, `summary`, and `memorables` in addition to the prior Q&A fields, returns `intent` and `intentConfidence` in every final `complete` event, and keeps topic-shift detection QA-only. Non-QA intents append compact assistant status messages to `recentMessages`, while compression remains scoped to message history and `rollingSum`. Added `scripts/test-intent-ask.ts` to verify all four intents plus the ambiguous-to-QA fallback. Verified with `npx ts-node --project tsconfig.scripts.json scripts/test-intent-ask.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-qa.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-topic-shift.ts` ✓, `npx ts-node --project tsconfig.scripts.json scripts/test-compress.ts` ✓, and `npm run build` ✓.
 
 ---
 

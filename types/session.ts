@@ -34,9 +34,17 @@ export interface Flashcard {
   back: string;
 }
 
+export type StudyIntent = 'qa' | 'summarize' | 'memorables' | 'flashcards';
+export type IntentConfidence = 'low' | 'medium' | 'high';
+
 export interface TopicShiftResult {
   shifted: boolean;
   newSubject: string | null;
+}
+
+export interface IntentClassificationResult {
+  intent: StudyIntent;
+  confidence: IntentConfidence;
 }
 
 export interface ClassifierResult {

@@ -72,6 +72,10 @@ async function main() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         question: 'What is the main purpose of photosynthesis?',
+        material:
+          'Photosynthesis captures light energy, produces ATP and NADPH, and uses the Calvin cycle to fix carbon dioxide into sugars.',
+        summary: null,
+        memorables: [],
         persona:
           'You are a biology tutor who gives concise, exam-ready explanations and stays grounded in the study material.',
         currentSubject: 'Biology',

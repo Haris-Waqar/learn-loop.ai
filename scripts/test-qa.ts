@@ -52,6 +52,8 @@ interface ParsedSseEvent<T = unknown> {
 }
 
 interface QACompleteEvent {
+  intent: 'qa';
+  intentConfidence: 'low' | 'medium' | 'high';
   answer: string;
   updatedMessages: Message[];
   tokenCount: number;
@@ -134,6 +136,9 @@ async function askQuestion(
   postRoute: typeof import('../app/api/session/ask/route').POST,
   payload: {
     question: string;
+    material: string;
+    summary: string | null;
+    memorables: string[];
     persona: string;
     currentSubject: string;
     currentSubtopic: string;
@@ -180,6 +185,9 @@ async function main() {
 
   const first = await askQuestion(askPOST, {
     question: 'What are the two main stages of photosynthesis?',
+    material: session.material,
+    summary: session.summary,
+    memorables: session.memorables,
     persona: session.persona,
     currentSubject: session.subject,
     currentSubtopic: session.subtopic,
@@ -189,11 +197,15 @@ async function main() {
   });
   recentMessages = first.complete.updatedMessages;
 
+  assert(first.complete.intent === 'qa', 'First ask call should classify as qa.');
   assert(/light-dependent/i.test(first.complete.answer), 'First answer should mention the light-dependent reactions.');
   assert(/Calvin cycle/i.test(first.complete.answer), 'First answer should mention the Calvin cycle.');
 
   const second = await askQuestion(askPOST, {
     question: 'Which stage uses ATP and NADPH from the first stage?',
+    material: session.material,
+    summary: session.summary,
+    memorables: session.memorables,
     persona: session.persona,
     currentSubject: session.subject,
     currentSubtopic: session.subtopic,
@@ -208,6 +220,9 @@ async function main() {
 
   const third = await askQuestion(askPOST, {
     question: 'Give me a simpler comparison between those two stages.',
+    material: session.material,
+    summary: session.summary,
+    memorables: session.memorables,
     persona: session.persona,
     currentSubject: session.subject,
     currentSubtopic: session.subtopic,
@@ -255,6 +270,9 @@ async function main() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         question: '   ',
+        material: session.material,
+        summary: session.summary,
+        memorables: session.memorables,
         persona: session.persona,
         currentSubject: session.subject,
         currentSubtopic: session.subtopic,

@@ -1,9 +1,8 @@
 /**
- * Phase 5 test: verify topic-shift detection both directly and through
- * the ask route complete payload.
+ * Phase 8.5 test: verify intent-routed chat dispatch through /api/session/ask.
  *
  * Run:
- * npx ts-node --project tsconfig.scripts.json scripts/test-topic-shift.ts
+ * npx ts-node --project tsconfig.scripts.json scripts/test-intent-ask.ts
  */
 import * as dotenv from 'dotenv';
 import Module from 'module';
@@ -11,7 +10,7 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-import type { Message, SerializedVector, SessionState } from '../types/session';
+import type { Message, SessionState } from '../types/session';
 
 type ModuleWithResolver = typeof Module & {
   _resolveFilename: (
@@ -32,17 +31,17 @@ moduleWithResolver._resolveFilename = function patchedResolveFilename(request, p
   return originalResolveFilename.call(this, request, parent, isMain, options);
 };
 
-const material = `
-Photosynthesis occurs in chloroplasts and begins with the light-dependent reactions, which capture light energy to produce ATP and NADPH.
-The Calvin cycle uses ATP and NADPH to fix carbon dioxide into sugars.
-Stomata regulate gas exchange in plant leaves.
-`;
-
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
   }
 }
+
+const material = `
+Photosynthesis occurs in chloroplasts. Light-dependent reactions produce ATP and NADPH.
+The Calvin cycle uses those molecules to fix carbon dioxide into sugars.
+Chlorophyll absorbs red and blue wavelengths efficiently, and stomata regulate gas exchange.
+`;
 
 interface ParsedSseEvent<T = unknown> {
   event: string;
@@ -107,31 +106,35 @@ async function startSession(postRoute: typeof import('../app/api/session/start/r
     }),
   );
   const json = (await response.json()) as { success: boolean; data?: SessionState; error?: string };
+
   assert(response.ok, `Session start failed: ${json.error ?? 'unknown error'}`);
   assert(json.success && json.data, 'Expected session data from start route.');
   return json.data;
 }
 
-async function askQuestion(
+async function ask(
   postRoute: typeof import('../app/api/session/ask/route').POST,
-  payload: {
-    question: string;
-    material: string;
-    summary: string | null;
-    memorables: string[];
-    persona: string;
-    currentSubject: string;
-    currentSubtopic: string;
-    recentMessages: Message[];
-    rollingSum: string;
-    serializedVectors: SerializedVector[];
-  },
+  session: SessionState,
+  recentMessages: Message[],
+  rollingSum: string,
+  question: string,
 ) {
   const response = await postRoute(
     new Request('http://localhost/api/session/ask', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        question,
+        material: session.material,
+        summary: session.summary,
+        memorables: session.memorables,
+        persona: session.persona,
+        currentSubject: session.subject,
+        currentSubtopic: session.subtopic,
+        recentMessages,
+        rollingSum,
+        serializedVectors: session.serializedVectors,
+      }),
     }),
   );
 
@@ -139,58 +142,70 @@ async function askQuestion(
   const events = await collectSseEvents<Record<string, unknown>>(response);
   const completeEvent = events.find((event) => event.event === 'complete');
   assert(completeEvent, 'Expected a complete event.');
-  return completeEvent.data as {
-    topicShift: { shifted: boolean; newSubject: string | null };
-  };
+  return completeEvent.data;
 }
 
 async function main() {
-  const { runTopicShiftChain } = (await import('../lib/langchain/chains/topicShiftChain')) as typeof import('../lib/langchain/chains/topicShiftChain');
   const { POST: startPOST } = (await import('../app/api/session/start/route')) as typeof import('../app/api/session/start/route');
   const { POST: askPOST } = (await import('../app/api/session/ask/route')) as typeof import('../app/api/session/ask/route');
 
-  const onTopic = await runTopicShiftChain({
-    currentSubject: 'Biology',
-    currentSubtopic: 'Photosynthesis',
-    userMessage: 'Can you explain the Calvin cycle more simply?',
-  });
-  assert(onTopic.shifted === false, 'Expected on-topic follow-up to stay within the current subject.');
-
-  const offTopic = await runTopicShiftChain({
-    currentSubject: 'Biology',
-    currentSubtopic: 'Photosynthesis',
-    userMessage: 'How do JavaScript promises work in Node.js?',
-  });
-  assert(offTopic.shifted === true, 'Expected clearly off-topic question to trigger a topic shift.');
-  assert(offTopic.newSubject, 'Expected newSubject when shift is detected.');
-
   const session = await startSession(startPOST);
-  const askResult = await askQuestion(askPOST, {
-    question: 'How do JavaScript promises work in Node.js?',
-    material: session.material,
-    summary: session.summary,
-    memorables: session.memorables,
-    persona: session.persona,
-    currentSubject: session.subject,
-    currentSubtopic: session.subtopic,
-    recentMessages: [],
-    rollingSum: '',
-    serializedVectors: session.serializedVectors,
-  });
+  let recentMessages = session.recentMessages;
+  let rollingSum = session.rollingSum;
 
-  assert(askResult.topicShift.shifted === true, 'Expected ask route to surface topic shift in complete event.');
+  const qa = await ask(askPOST, session, recentMessages, rollingSum, 'Explain the Calvin cycle.');
+  assert(qa.intent === 'qa', 'Expected QA intent for explanation prompt.');
+  assert(typeof qa.answer === 'string', 'Expected QA answer payload.');
+  recentMessages = qa.updatedMessages as Message[];
+  rollingSum = qa.rollingSum as string;
+
+  const summary = await ask(askPOST, session, recentMessages, rollingSum, 'Summarize this session.');
+  assert(summary.intent === 'summarize', 'Expected summarize intent.');
+  assert(typeof summary.summary === 'string' && summary.summary.length > 0, 'Expected summary payload.');
+  session.summary = summary.summary as string;
+  recentMessages = summary.updatedMessages as Message[];
+  rollingSum = summary.rollingSum as string;
+
+  const memorables = await ask(
+    askPOST,
+    session,
+    recentMessages,
+    rollingSum,
+    'Give me the key things to remember from this topic.',
+  );
+  assert(memorables.intent === 'memorables', 'Expected memorables intent.');
+  assert(Array.isArray(memorables.memorables) && memorables.memorables.length >= 5, 'Expected memorables payload.');
+  recentMessages = memorables.updatedMessages as Message[];
+  rollingSum = memorables.rollingSum as string;
+
+  session.memorables = memorables.memorables as string[];
+
+  const flashcards = await ask(askPOST, session, recentMessages, rollingSum, 'Make flashcards from this.');
+  assert(flashcards.intent === 'flashcards', 'Expected flashcards intent.');
+  assert(Array.isArray(flashcards.flashcards) && flashcards.flashcards.length >= 5, 'Expected flashcards payload.');
+  recentMessages = flashcards.updatedMessages as Message[];
+  rollingSum = flashcards.rollingSum as string;
+
+  const ambiguous = await ask(askPOST, session, recentMessages, rollingSum, 'Can you help with this topic?');
+  assert(ambiguous.intent === 'qa', 'Ambiguous prompt should default to qa.');
+  assert(
+    recentMessages.every((message) => message.content.length < 200),
+    'Non-QA intents should add compact assistant status messages rather than structured payloads.',
+  );
 
   console.log('\nInput');
-  console.log(`- Direct on-topic message: Can you explain the Calvin cycle more simply?`);
-  console.log(`- Direct off-topic message: How do JavaScript promises work in Node.js?`);
-  console.log(`- Ask route subject/subtopic: ${session.subject} / ${session.subtopic}`);
-  console.log(`- Ask route question: How do JavaScript promises work in Node.js?`);
+  console.log(`- Subject/subtopic: ${session.subject} / ${session.subtopic}`);
+  console.log(`- Intent prompts: qa, summarize, memorables, flashcards, ambiguous`);
 
-  console.log('\nTopic-shift results');
-  console.log(`- Direct on-topic check: ${onTopic.shifted}`);
-  console.log(`- Direct off-topic check: ${offTopic.shifted} (${offTopic.newSubject})`);
-  console.log(`- Ask route off-topic check: ${askResult.topicShift.shifted}`);
-  console.log('\n✓ Phase 5 topic-shift test passed.');
+  console.log('\nIntent dispatch results');
+  console.log(`- Explain the Calvin cycle. -> ${qa.intent}`);
+  console.log(`- Summarize this session. -> ${summary.intent}`);
+  console.log(`- Give me the key things to remember from this topic. -> ${memorables.intent}`);
+  console.log(`- Make flashcards from this. -> ${flashcards.intent}`);
+  console.log(`- Can you help with this topic? -> ${ambiguous.intent}`);
+  console.log(`- Rolling summary length after mixed intents: ${rollingSum.length}`);
+
+  console.log('\n✓ Phase 8.5 intent-routing test passed.');
 }
 
 main().catch((error) => {
