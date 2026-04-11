@@ -34,6 +34,15 @@ export interface Flashcard {
   back: string;
 }
 
+export interface RecentLoop {
+  loopId: string;
+  title: string;
+  subject: string;
+  subtopic: string;
+  updatedAt: number;
+  sourceCount: number;
+}
+
 export type StudyIntent = 'qa' | 'summarize' | 'memorables' | 'flashcards';
 export type IntentConfidence = 'low' | 'medium' | 'high';
 

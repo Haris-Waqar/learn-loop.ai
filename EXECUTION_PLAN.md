@@ -385,25 +385,156 @@ npm run build
 
 ---
 
-## Phase 9 — Minimal UI (Functional, Not Polished) `[ ]`
+## Phase 9 — Core Product UI Flow `[~]`
 
 **What gets built:**
-Bare-bones UI to test all chains through the browser without Postman. No animations, no polish.
+The first complete LearnLoop app flow around the already-implemented backend chains. The UI/UX flow can take structural inspiration from NotebookLM for layout clarity, page sequencing, and workspace composition, but all user-facing wording and surfaced features stay LearnLoop-native and limited to features already supported in the codebase.
+
+This phase shifts Phase 9 away from a browser-only test harness and into the core product shell:
+- landing page for product entry
+- recent loops page for app entry and resumption
+- loop workspace for chat, sources, and study tools
+
+Phase 9 is frontend-shell first. Persistence is local/browser-backed for now rather than database-backed.
+
+**Public routes in this phase:**
+- `/` → landing page
+- `/loops` → recent loops page
+- `/loops/[loopId]` → loop workspace
+
+**Shared UI/state assumptions:**
+- User-facing terminology is standardized around `loops`
+- `SessionState` remains the core client-side state contract for the workspace
+- Existing `app/api/session/*` routes remain the backend surface for UI integration
+- NotebookLM is a UI/UX reference only; its product nouns should not appear in LearnLoop UI copy or this plan
+
+---
+
+## Phase 9.1 — Landing Page `[x]`
+
+**What gets built:**
+Marketing landing page that introduces LearnLoop’s product flow and routes users into the loop flow. The page includes the hero, ticker, explainer/process section, and primary CTA entry into the app.
 
 **Files to create/modify:**
-- `app/page.tsx` (material input + Start Session button)
-- `app/session/page.tsx` (session info panel, mode buttons, Q&A input, output panel, token usage)
-- Basic Tailwind layout only
+- `app/page.tsx`
 
 **Acceptance criteria:**
-- Full end-to-end session testable in browser
-- All 4 study modes trigger and display output
-- Topic shift detected and logged to output panel
-- Token usage displayed
+- Landing page clearly explains the LearnLoop product flow
+- Primary CTA routes users into the app flow
+- “See how it works” anchors correctly to the explainer section
+- Page builds cleanly and reflects the LearnLoop visual system
 
 **Test commands:**
 ```bash
-npm run dev  # manual browser test
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Landing page already implemented in `app/page.tsx`, including hero, ticker, explainer section, and CTA-driven entry into the product flow. Verified as part of recent homepage build checks.
+
+---
+
+## Phase 9.2 — Recent Loops Page `[x]`
+
+**What gets built:**
+A dedicated `Recent Loops` page that serves as the app entry point after the landing page. This page is the LearnLoop equivalent of a recent-workspace dashboard: users can resume an existing loop or create a new one.
+
+**User-facing wording for this phase:**
+- Page title: `Recent Loops`
+- Primary action: `New Loop`
+- Supporting copy: “Pick up where you left off or start a new loop.”
+
+**Files to create/modify:**
+- `app/loops/page.tsx`
+- client-side session/loop persistence utilities as needed
+- shared UI components for loop list cards, empty states, and top-level app navigation as needed
+
+**What the page must include:**
+- List/grid of existing loops with enough metadata to identify and resume them
+- Prominent `New Loop` action
+- Empty state for first-time users
+- Local/browser persistence only for this phase
+
+**Route/interface assumptions:**
+- `/loops` is the canonical recent loops page
+- Each loop item links into a dedicated loop workspace route
+- Loop records are stored in browser/local persistence or temporary mock persistence for now
+
+**Acceptance criteria:**
+- User can navigate from the landing page into `/loops`
+- User can create a new loop from the recent loops page
+- Existing loops render from local/mock persistence
+- Empty state is clear and usable when no loops exist
+- Clicking an existing loop opens its workspace
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Added `/loops` as the canonical recent-loops dashboard with LearnLoop branding, empty state, `New Loop` CTA, and local-storage-backed loop list rendering. Introduced a lightweight `RecentLoop` client type plus browser persistence helpers for reading, sorting, and updating recent loops without changing backend APIs. Updated landing page CTAs to enter the app through `/loops` while keeping `/session` as the temporary creation/resume destination for Phase 9.3. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3 — Loop Workspace `[ ]`
+
+**What gets built:**
+A dedicated loop workspace that replaces the current placeholder session screen with a real product workspace. The layout takes inspiration from NotebookLM’s clarity and composition, but uses LearnLoop’s own terminology and only exposes currently implemented features.
+
+**User-facing wording for this phase:**
+- Workspace title: `Loop`
+- Main areas:
+  - `Chat`
+  - `Sources`
+  - `Tools`
+- Tool labels:
+  - `Summary`
+  - `Flashcards`
+  - `Memorables`
+  - `Handoff`
+
+**Files to create/modify:**
+- `app/loops/[loopId]/page.tsx`
+- `app/session/page.tsx` if retained temporarily as an alias or transitional route
+- `types/session.ts`
+- shared UI/state utilities needed to load, update, and persist loop state
+- existing `app/api/session/*` integration points
+
+**What the workspace must include:**
+- Chat panel for conversational interaction
+- Sources section for pasted material and active session context
+- Tools section for summary, flashcards, memorables, and handoff
+- Frontend wiring to:
+  - `/api/session/start`
+  - `/api/session/ask`
+  - `/api/session/summarize`
+  - `/api/session/memorables`
+  - `/api/session/flashcards`
+  - `/api/session/handoff`
+- Display of streaming `thinking` and content events from SSE-backed routes
+- Session state handling using the existing `SessionState` shape
+
+**Behavior expectations:**
+- User can start a loop from pasted material
+- Ask flow supports streaming answers in the chat panel
+- Sources area exposes the underlying material/context used by the loop
+- Tools can trigger and render summary, memorables, flashcards, and handoff outputs
+- Topic-shift and intent-routing outputs are surfaced in the UI where appropriate
+- Loop state survives route-level navigation and refresh via local/browser persistence for this phase
+
+**Acceptance criteria:**
+- User can create a loop from pasted material and enter the workspace
+- Chat panel supports ask flow and shows streamed responses
+- Sources area shows the underlying material/context
+- Tools section can trigger summary, memorables, flashcards, and handoff
+- Topic shift and intent-routing outputs are visible in the UI where appropriate
+- Refresh/navigation preserves the active loop using local/browser persistence assumptions
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
 ```
 
 **Completion notes:** _(fill in after done)_

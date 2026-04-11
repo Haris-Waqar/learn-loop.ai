@@ -91,11 +91,11 @@ export default function Home() {
           {/* CTAs */}
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/session"
+              href="/loops"
               className="group relative overflow-hidden rounded-full bg-white px-8 py-4 text-[0.9375rem] font-semibold text-[#081018]"
             >
               {/* Default label — slides up and fades on hover */}
-              <span className="inline-flex items-center gap-3 transition-all duration-300 group-hover:-translate-y-10 group-hover:opacity-0">
+              <span className="text-[#4FB7B3] inline-flex items-center gap-3 transition-all duration-300 group-hover:-translate-y-10 group-hover:opacity-0">
                 Start your loop
                 <ArrowRight className="size-4" />
               </span>
@@ -162,7 +162,7 @@ export default function Home() {
               </h2>
             </div>
             <Link
-              href="/session"
+              href="/loops"
               className="hidden items-center gap-2 text-sm font-medium text-[#4FB7B3] transition hover:text-white sm:flex"
             >
               Start your loop <ArrowRight className="size-4" />
@@ -184,8 +184,7 @@ export default function Home() {
                     className="group relative overflow-hidden rounded-[26px] border border-[#0f1e2e] bg-[#090f18] px-5 py-5 transition-all duration-300 hover:border-[#0d9488]/30 hover:bg-[#0b1620] hover:shadow-[0_20px_64px_rgba(2,12,24,0.4)] sm:px-6 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-6 md:px-6 md:py-5"
                   >
                     <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white/[0.03] to-transparent" />
-                      <div className="absolute -left-8 top-10 h-24 w-24 rounded-full bg-[#0d9488]/10 blur-3xl" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_50%,rgba(13,148,136,0.08),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.02),transparent_18%)]" />
                     </div>
 
                     <div className="relative mb-4 flex items-center gap-4 md:mb-0 md:min-w-[5.25rem] md:flex-col md:items-start md:gap-2">
@@ -236,7 +235,7 @@ export default function Home() {
 
           <div className="mt-10 flex justify-center sm:hidden">
             <Link
-              href="/session"
+              href="/loops"
               className="inline-flex items-center gap-2 text-sm font-medium text-[#4FB7B3] transition hover:text-white"
             >
               Start your loop <ArrowRight className="size-4" />
