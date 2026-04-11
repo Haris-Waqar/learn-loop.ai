@@ -181,7 +181,7 @@ export default function Home() {
                 return (
                   <div
                     key={step.number}
-                    className="group relative overflow-hidden rounded-[26px] border border-[#0f1e2e] bg-[#090f18] px-5 py-5 transition-all duration-300 hover:border-[#0d9488]/30 hover:bg-[#0b1620] hover:shadow-[0_20px_64px_rgba(2,12,24,0.4)] sm:px-6 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-6 md:px-6 md:py-5"
+                    className="group relative overflow-hidden rounded-[26px] border border-[#133047] bg-[linear-gradient(180deg,#0b1420_0%,#09111b_100%)] px-5 py-5 shadow-[0_14px_40px_rgba(2,12,24,0.24),inset_0_1px_0_rgba(255,255,255,0.03)] transition-all duration-300 hover:border-[#0d9488]/35 hover:bg-[#0b1620] hover:shadow-[0_24px_80px_rgba(2,12,24,0.42),inset_0_1px_0_rgba(255,255,255,0.04)] sm:px-6 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-6 md:px-6 md:py-5"
                   >
                     <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_50%,rgba(13,148,136,0.08),transparent_34%),linear-gradient(90deg,rgba(255,255,255,0.02),transparent_18%)]" />
