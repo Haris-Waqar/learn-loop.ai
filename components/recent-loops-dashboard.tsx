@@ -8,38 +8,38 @@ import { readRecentLoops, touchRecentLoop } from '@/lib/session/recentLoops';
 import type { RecentLoop } from '@/types/session';
 
 const DEMO_LOOPS: RecentLoop[] = [
-  // {
-  //   loopId: 'demo-chemistry-stoichiometry',
-  //   title: 'Chemistry — Stoichiometry',
-  //   subject: 'Chemistry',
-  //   subtopic: 'Stoichiometry',
-  //   updatedAt: Date.now() - 1000 * 60 * 42,
-  //   sourceCount: 1,
-  // },
-  // {
-  //   loopId: 'demo-biology-cellular-respiration',
-  //   title: 'Biology — Cellular Respiration',
-  //   subject: 'Biology',
-  //   subtopic: 'Cellular respiration',
-  //   updatedAt: Date.now() - 1000 * 60 * 60 * 5,
-  //   sourceCount: 1,
-  // },
-  // {
-  //   loopId: 'demo-history-industrial-revolution',
-  //   title: 'History — Industrial Revolution',
-  //   subject: 'History',
-  //   subtopic: 'Industrial Revolution',
-  //   updatedAt: Date.now() - 1000 * 60 * 60 * 26,
-  //   sourceCount: 1,
-  // },
-  // {
-  //   loopId: 'demo-software-distributed-systems',
-  //   title: 'Software Engineering — Distributed Systems',
-  //   subject: 'Software Engineering',
-  //   subtopic: 'Distributed Systems',
-  //   updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
-  //   sourceCount: 1,
-  // },
+  {
+    loopId: 'demo-chemistry-stoichiometry',
+    title: 'Chemistry — Stoichiometry',
+    subject: 'Chemistry',
+    subtopic: 'Stoichiometry',
+    updatedAt: Date.now() - 1000 * 60 * 42,
+    sourceCount: 1,
+  },
+  {
+    loopId: 'demo-biology-cellular-respiration',
+    title: 'Biology — Cellular Respiration',
+    subject: 'Biology',
+    subtopic: 'Cellular respiration',
+    updatedAt: Date.now() - 1000 * 60 * 60 * 5,
+    sourceCount: 1,
+  },
+  {
+    loopId: 'demo-history-industrial-revolution',
+    title: 'History — Industrial Revolution',
+    subject: 'History',
+    subtopic: 'Industrial Revolution',
+    updatedAt: Date.now() - 1000 * 60 * 60 * 26,
+    sourceCount: 1,
+  },
+  {
+    loopId: 'demo-software-distributed-systems',
+    title: 'Software Engineering — Distributed Systems',
+    subject: 'Software Engineering',
+    subtopic: 'Distributed Systems',
+    updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
+    sourceCount: 1,
+  },
 ];
 
 function formatUpdatedAt(timestamp: number) {
