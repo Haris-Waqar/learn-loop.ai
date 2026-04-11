@@ -124,7 +124,7 @@ export default function Home() {
       </section>
 
       {/* ── Ticker separator ── */}
-      <div className="relative overflow-hidden border-y border-[#0d2229] bg-[#071a1f] py-5">
+      <div id="loop" className="relative overflow-hidden border-y border-[#0d2229] bg-[#071a1f] py-5">
         <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#071a1f] to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#071a1f] to-transparent" />
         <div className="flex">
@@ -150,14 +150,14 @@ export default function Home() {
       </div>
 
       {/* ── The Loop — dark section ── */}
-      <section id="loop" className="border-t border-[#0c121a] bg-[#060d15]">
-        <div className="mx-auto w-full max-w-7xl px-6 pb-28 pt-24 sm:px-10 lg:pb-36 lg:pt-32">
-          <div className="mb-16 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="border-t border-[#0c121a] bg-[#060d15]">
+        <div className="mx-auto w-full max-w-7xl px-6 pb-16 pt-16 sm:px-10 lg:pb-20 lg:pt-20">
+          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="mb-3 font-mono text-[10px] tracking-[0.32em] text-[#4FB7B3]/70 uppercase">
                 How it works
               </p>
-              <h2 className="text-4xl font-semibold tracking-tight text-[#dce8f8] sm:text-5xl">
+              <h2 className="text-4xl font-semibold tracking-tight text-[#dce8f8] sm:text-[3.25rem]">
                 One session.<br className="sm:hidden" /> Four steps.
               </h2>
             </div>
@@ -169,33 +169,69 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {loop.map((step, i) => {
-              const Icon = STEP_ICONS[i];
-              return (
-                <div
-                  key={step.number}
-                  className="group relative overflow-hidden rounded-2xl border border-[#0f1e2e] bg-[#090f18] p-8 transition-all duration-300 hover:border-[#0d9488]/30 hover:bg-[#0b1620]"
-                >
-                  <div className="mb-6 flex items-start justify-between">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-[#0d9488]/10 text-[#4FB7B3] transition-colors duration-300 group-hover:bg-[#0d9488]/20">
-                      <Icon className="size-4" strokeWidth={1.8} />
+          <div className="relative">
+            <div
+              aria-hidden
+              className="absolute left-[1.2rem] top-5 hidden h-[calc(100%-2.5rem)] w-px bg-gradient-to-b from-[#0d9488]/0 via-[#0d9488]/35 to-[#0d9488]/0 md:block"
+            />
+
+            <div className="space-y-3">
+              {loop.map((step, i) => {
+                const Icon = STEP_ICONS[i];
+                return (
+                  <div
+                    key={step.number}
+                    className="group relative overflow-hidden rounded-[26px] border border-[#0f1e2e] bg-[#090f18] px-5 py-5 transition-all duration-300 hover:border-[#0d9488]/30 hover:bg-[#0b1620] hover:shadow-[0_20px_64px_rgba(2,12,24,0.4)] sm:px-6 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:gap-6 md:px-6 md:py-5"
+                  >
+                    <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white/[0.03] to-transparent" />
+                      <div className="absolute -left-8 top-10 h-24 w-24 rounded-full bg-[#0d9488]/10 blur-3xl" />
                     </div>
-                    <span className="select-none font-mono text-2xl font-bold text-[#60a5fa]/12 transition-colors duration-300 group-hover:text-[#60a5fa]/25">
-                      {step.number}
-                    </span>
+
+                    <div className="relative mb-4 flex items-center gap-4 md:mb-0 md:min-w-[5.25rem] md:flex-col md:items-start md:gap-2">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#173347] bg-[#0d9488]/10 text-[#4FB7B3] transition-all duration-300 group-hover:scale-[1.03] group-hover:bg-[#0d9488]/20">
+                        <Icon className="size-4" strokeWidth={1.8} />
+                      </span>
+                      <div className="flex min-w-0 items-center gap-3 md:flex-col md:items-start md:gap-1.5">
+                        <span className="font-mono text-[10px] tracking-[0.28em] text-[#4FB7B3]/55 uppercase">
+                          Step
+                        </span>
+                        <span className="select-none font-mono text-xl font-bold text-[#60a5fa]/20 transition-colors duration-300 group-hover:text-[#60a5fa]/35 md:text-[1.7rem]">
+                          {step.number}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="relative md:pt-0.5">
+                      <div className="mb-2">
+                        <h3 className="max-w-[20ch] text-[1.0625rem] font-semibold text-[#dce8f8]">
+                          {step.title}
+                        </h3>
+                      </div>
+                      <p className="max-w-[62ch] text-sm leading-[1.75] text-[#4e6a88]">
+                        {step.description}
+                      </p>
+                    </div>
+
+                    {i < loop.length - 1 ? (
+                      <div className="relative hidden md:flex md:items-start md:pt-1">
+                        <span className="rounded-full border border-[#123041] bg-[#081018] px-3 py-1 font-mono text-[10px] tracking-[0.24em] text-white/30 uppercase">
+                          Continue
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="relative hidden md:flex md:items-start md:pt-1">
+                        <span className="rounded-full border border-[#123041] bg-[#081018] px-3 py-1 font-mono text-[10px] tracking-[0.24em] text-[#4FB7B3]/70 uppercase">
+                          Repeat
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-0 left-5 right-5 h-px origin-left scale-x-0 bg-gradient-to-r from-[#0d9488]/60 via-[#0d9488]/10 to-transparent transition-transform duration-500 group-hover:scale-x-100 sm:left-6 sm:right-6 md:left-[6rem] md:right-6" />
                   </div>
-                  <h3 className="mb-2.5 text-[1.0625rem] font-semibold text-[#dce8f8]">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm leading-[1.8] text-[#4e6a88]">
-                    {step.description}
-                  </p>
-                  {/* Bottom teal accent line — scales in on hover */}
-                  <div className="absolute bottom-0 left-0 right-0 h-px origin-center scale-x-0 bg-gradient-to-r from-transparent via-[#0d9488]/60 to-transparent transition-transform duration-500 group-hover:scale-x-100" />
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-10 flex justify-center sm:hidden">
