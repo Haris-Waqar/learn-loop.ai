@@ -11,15 +11,18 @@ export function ShaderHero() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const raf = requestAnimationFrame(() => setMounted(true));
     const update = () => setDims({ width: window.innerWidth, height: window.innerHeight });
     update();
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', update);
+    };
   }, []);
 
   return (
-    <div className="absolute inset-0">
+    <div className="pointer-events-none absolute inset-0 z-0">
       {mounted && (
         <MeshGradient
           width={dims.width}
@@ -33,8 +36,8 @@ export function ShaderHero() {
           grainOverlay={0}
         />
       )}
-      {/* Minimal dark veil — just enough for white text legibility */}
-      <div className="absolute inset-0 bg-black/15" />
+      {/* Veil — dark mode keeps contrast for light text; light mode lifts the mesh */}
+      <div className="absolute inset-0 bg-white/45 dark:bg-black/15" />
     </div>
   );
 }

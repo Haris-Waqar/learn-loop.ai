@@ -48,6 +48,8 @@ learnloop.ai/
 ├── components/
 │   ├── ui/                   # Generic, context-free primitives
 │   │   └── button.tsx
+│   ├── dark-mode-toggle.tsx  # Header theme toggle button
+│   ├── theme-provider.tsx    # next-themes wrapper for app-wide theme state
 │   ├── shader-hero.tsx       # MeshGradient WebGL background
 │   ├── rotating-text.tsx     # Animated word rotation
 │   ├── shiny-text.tsx        # Shine sweep text effect
@@ -81,18 +83,28 @@ learnloop.ai/
 
 ## Color System
 
-All colors are used as raw hex values in Tailwind classes. The palette has three layers.
+Use semantic theme tokens first (`bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`). Add raw hex values only for LearnLoop-specific accents and special surfaces. The palette has three layers.
 
-### Base (Backgrounds)
+### Theme Tokens
+
+| Token | Usage |
+|---|---|---|
+| `background` | Page background in both themes |
+| `foreground` | Default high-emphasis text |
+| `card` / `card-foreground` | Generic surfaces and titles |
+| `muted` / `muted-foreground` | Secondary surfaces and body copy |
+| `border` | Default border treatment |
+
+### Dark-Specific Surfaces
 
 | Token | Value | Usage |
 |---|---|---|
-| Deep background | `#081018` | Hero section background |
+| Deep background | `#081018` | Dark UI base / CTA contrast reference |
 | Dark surface | `#060d15` | Features section, footer |
 | Ticker band | `#071a1f` | Marquee ticker (teal-tinted dark) |
-| Card background | `#090f18` | Feature cards default |
-| Card hover | `#0b1620` | Feature cards on hover |
-| Section divider | `#0c121a` | Borders between sections |
+| Card background | `#090f18` to `#0b1420` | Dark cards and panels |
+| Card hover | `#0b1620` | Dark cards on hover |
+| Section divider | `#0c121a` | Dark section borders |
 
 ### Brand Accents
 
@@ -103,14 +115,25 @@ All colors are used as raw hex values in Tailwind classes. The palette has three
 | Lime | `#84cc16` | Dot separators (legacy — minimize new use) |
 | Sky blue | `#60a5fa` | Card number accents |
 
-### Text
+### Light-Mode Support Colors
+
+| Token | Value | Usage |
+|---|---|---|
+| Light heading | `#152b32` | Titles on tinted light cards |
+| Light body | `#5e7279` | Body copy on light surfaces |
+| Light caption | `#59757c` | Hero / section supporting text |
+| Light meta | `#7c9196` | Pills, labels, metadata |
+| Light teal label | `#2f9f9a` | Eyebrows and emphasized small labels |
+| Light number accent | `#85c8d5` | Step number treatment in light mode |
+
+### Dark Text
 
 | Token | Value | Usage |
 |---|---|---|
 | Heading | `#dce8f8` | Section headings, card titles |
 | Body | `#4e6a88` | Card body copy |
 | Muted | `#2d4a68` | Subtle links, placeholder text |
-| White full | `white` | Hero headline, logo, primary CTAs |
+| White full | `white` | Primary dark-on-light contrast cases |
 | White dimmed | `white/80`, `white/50`, `white/40` | Sub-headlines, footer tagline |
 
 ### Borders
@@ -130,6 +153,45 @@ All colors are used as raw hex values in Tailwind classes. The palette has three
 - **Heading sizes**: `clamp()` for responsive display type; fixed sizes for section headings
 - **Tracking**: `-0.03em` on large headlines; `0.2–0.32em` on mono uppercase labels
 - **Never use**: Inter, Roboto, Arial, or system-ui as the primary font
+
+---
+
+## Theme System
+
+### Architecture
+
+- Theme state is provided once in `app/layout.tsx` via `components/theme-provider.tsx`.
+- `ThemeProvider` wraps `next-themes` with `attribute="class"`, `defaultTheme="dark"`, and `enableSystem={false}`.
+- `<html>` must include `suppressHydrationWarning` because the theme class changes on the client.
+- New pages should consume theme state through CSS classes, not by reading the theme in page components unless interaction depends on it.
+
+### Toggle Pattern
+
+- Reuse `components/dark-mode-toggle.tsx`; do not create page-specific theme buttons.
+- The toggle is a client component and waits until mount before rendering the interactive button.
+- Use the mounted placeholder pattern (`if (!mounted) return <div className="h-10 w-10 rounded-full" aria-hidden />`) to avoid layout shift and hydration mismatch.
+- Toggle placement for top-level pages: top-right, mirrored against the logo (`absolute right-6 top-6 z-20 sm:right-10 sm:top-7`).
+
+### Page Styling Rules
+
+- Start page shells with `bg-background text-foreground`, not hardcoded dark fills.
+- For components that need custom dark art direction, keep light mode as the base class and layer dark styling with `dark:*`.
+- If a light-only background image or gradient is added, explicitly disable it in dark mode with `dark:bg-none` before applying the dark fill. This avoids the exact regression where dark cards sit on a light section.
+- Prefer semantic text classes for shared copy. Only use custom hex colors for refined light-mode hierarchy or brand accents.
+- Keep CTA structure theme-aware: `bg-foreground text-background` in light mode, with explicit `dark:bg-white dark:text-[#081018]` where needed.
+
+### Surface Patterns
+
+- Dark cards: teal-tinted navy gradients, subtle inset highlight, deeper shadows.
+- Light cards: very soft tinted gradients, restrained warm/teal mixing, lighter shadows, and stronger copy contrast.
+- Metadata pills should invert by theme: soft translucent white in light mode, dark navy chip in dark mode.
+- Hover effects should preserve the same geometry across themes; only color, shadow, and border intensity should shift.
+
+### Hero / Shader Rules
+
+- `ShaderHero` stays `pointer-events-none` and behind content (`absolute inset-0 z-0`).
+- The hero veil must be theme-aware: lighter veil in light mode (`bg-white/45`), darker veil in dark mode (`dark:bg-black/15`).
+- When using decorative backgrounds, all readable content must still define its own text colors; do not rely on the shader for contrast.
 
 ---
 
@@ -178,6 +240,11 @@ app/page.tsx          — server component (no 'use client')
   └── ShaderHero      — 'use client' (WebGL, window events)
   └── RotatingText    — 'use client' (animation, state)
 ```
+
+- Theme infrastructure is one of the few allowed app-wide client boundaries:
+  - `components/theme-provider.tsx` is client-only and lives under the root layout.
+  - `components/dark-mode-toggle.tsx` is client-only because it depends on `next-themes` and mount state.
+- For mount-sensitive client components (`DarkModeToggle`, `ShaderHero`), prefer `requestAnimationFrame` inside `useEffect` before flipping mounted state. This keeps hydration smoother and matches the current implementation.
 
 ### LangChain Chains
 
