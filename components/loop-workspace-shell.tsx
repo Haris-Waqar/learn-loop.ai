@@ -153,8 +153,17 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
       </div>
 
       <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+        <Link
+          href="/loops"
+          className="absolute left-4 top-1/2 inline-flex -translate-y-1/2 shrink-0 items-center sm:left-6 lg:left-8"
+        >
+          <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[#4FB7B3] text-white shadow-[0_10px_24px_rgba(79,183,179,0.24),0_0_28px_rgba(79,183,179,0.18),inset_0_1px_0_rgba(255,255,255,0.16)] ring-1 ring-white/8">
+            <Infinity className="size-5" strokeWidth={2.4} />
+          </span>
+        </Link>
+
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Link
               href="/loops"
               className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -163,10 +172,7 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
               <ArrowLeft className="size-4" />
             </Link>
 
-            <Link href="/loops" className="inline-flex items-center gap-3">
-              <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[#4FB7B3] text-white shadow-[0_12px_30px_rgba(79,183,179,0.35)]">
-                <Infinity className="size-5" strokeWidth={2.4} />
-              </span>
+            <Link href="/loops" className="min-w-0">
               <div className="min-w-0">
                 <p className="truncate text-lg font-semibold tracking-tight">{classificationLabel}</p>
                 <p className="truncate text-sm text-muted-foreground">
