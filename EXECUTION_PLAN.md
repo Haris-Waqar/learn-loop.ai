@@ -477,59 +477,287 @@ npm run build
 
 ---
 
-## Phase 9.3 — Loop Workspace `[ ]`
+## Phase 9.3 — Loop Workspace `[~]`
 
 **What gets built:**
-A dedicated loop workspace that replaces the current placeholder session screen with a real product workspace. The layout takes inspiration from NotebookLM’s clarity and composition, but uses LearnLoop’s own terminology and only exposes currently implemented features.
+The real LearnLoop workspace at `/loops/[loopId]`, replacing the temporary `/session` path. The workspace takes structural inspiration from NotebookLM for page composition and flow, but all wording, surfaced features, and interaction patterns remain LearnLoop-native and limited to features already implemented in Phases 2 through 8.6.
 
-**User-facing wording for this phase:**
-- Workspace title: `Loop`
-- Main areas:
+This phase covers:
+- canonical workspace route normalization
+- workspace layout shell
+- local `SessionState` persistence and restoration
+- sources/material flow
+- streaming chat with `thinking` states
+- tools panel integration for summary, memorables, flashcards, and handoff
+- recent loops integration back into the canonical route flow
+
+**Workspace wording for this phase:**
+- Page title: `Loop`
+- Main sections:
   - `Chat`
   - `Sources`
   - `Tools`
 - Tool labels:
   - `Summary`
-  - `Flashcards`
   - `Memorables`
+  - `Flashcards`
   - `Handoff`
+
+**Project implementation rules that apply to all mini phases:**
+- `app/` contains pages and API routes only; no business logic
+- `components/` contains UI only; no LangChain imports and no direct API logic
+- `lib/` contains workspace state, persistence, SSE parsing, and session helpers
+- `types/` contains shared workspace and session types
+- Prefer semantic theme tokens first (`bg-background`, `text-foreground`, `bg-card`, `border-border`, `text-muted-foreground`); use raw hex only for LearnLoop-specific accent surfaces
+- Reuse `components/dark-mode-toggle.tsx`; do not create a page-specific theme control
+- Keep `'use client'` boundaries as deep as possible
+- Use LearnLoop wording (`loop`, `material`, `sources`, `tools`, `handoff`), not NotebookLM nouns
+
+---
+
+## Phase 9.3.1 — Workspace Route + Template Shell `[x]`
+
+**What gets built:**
+- Canonical workspace route at `/loops/[loopId]`
+- Responsive workspace shell with all major sections present but initially non-functional
+- Top bar with LearnLoop logo and `DarkModeToggle`
+- Desktop-first layout with mobile/tablet behavior defined up front
 
 **Files to create/modify:**
 - `app/loops/[loopId]/page.tsx`
-- `app/session/page.tsx` if retained temporarily as an alias or transitional route
-- `types/session.ts`
-- shared UI/state utilities needed to load, update, and persist loop state
-- existing `app/api/session/*` integration points
+- shared workspace shell/layout components as needed
+- `components/dark-mode-toggle.tsx` (reuse, not replace)
 
-**What the workspace must include:**
-- Chat panel for conversational interaction
-- Sources section for pasted material and active session context
-- Tools section for summary, flashcards, memorables, and handoff
-- Frontend wiring to:
-  - `/api/session/start`
-  - `/api/session/ask`
-  - `/api/session/summarize`
-  - `/api/session/memorables`
-  - `/api/session/flashcards`
-  - `/api/session/handoff`
-- Display of streaming `thinking` and content events from SSE-backed routes
-- Session state handling using the existing `SessionState` shape
-
-**Behavior expectations:**
-- User can start a loop from pasted material
-- Ask flow supports streaming answers in the chat panel
-- Sources area exposes the underlying material/context used by the loop
-- Tools can trigger and render summary, memorables, flashcards, and handoff outputs
-- Topic-shift and intent-routing outputs are surfaced in the UI where appropriate
-- Loop state survives route-level navigation and refresh via local/browser persistence for this phase
+**What the shell must include:**
+- Top bar
+- Chat section
+- Sources section
+- Tools section
+- Theme-aware layout that works in both dark and light modes
 
 **Acceptance criteria:**
-- User can create a loop from pasted material and enter the workspace
-- Chat panel supports ask flow and shows streamed responses
-- Sources area shows the underlying material/context
-- Tools section can trigger summary, memorables, flashcards, and handoff
-- Topic shift and intent-routing outputs are visible in the UI where appropriate
-- Refresh/navigation preserves the active loop using local/browser persistence assumptions
+- `/loops/[loopId]` renders a full workspace skeleton
+- Chat, sources, and tools are visibly separated and labeled
+- Layout works in dark and light themes
+- Top-level route structure matches the app flow established by Phase 9.2
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Added the canonical workspace route at `/loops/[loopId]` and built a reusable, theme-aware shell with a top bar, `Chat`, `Sources`, and `Tools` sections. Kept the page route server-rendered with async `params` handling aligned to the installed Next.js App Router docs, while pushing the visual shell into `components/`. Normalized the recent-loops dashboard so resume and new-loop entry now flow into `/loops/[loopId]` rather than the temporary `/session` page. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.2 — Workspace State + Local Persistence `[x]`
+
+**What gets built:**
+- Full local restoration of `SessionState` when reopening an existing loop
+- Client-side loader/saver utilities for workspace state
+- Migration from Recent Loops metadata entry into full loop-state persistence
+- New-loop creation that routes into `/loops/[loopId]`
+
+**State behavior:**
+- Opening an existing loop restores full `SessionState`
+- Creating a new loop initializes an empty pre-start workspace state
+- Local/browser persistence remains the only storage strategy in this phase
+
+**Files to create/modify:**
+- `lib/session/` workspace persistence helpers
+- `types/session.ts` only if a small non-breaking persistence field is truly needed
+- route-level workspace loading code in `app/loops/[loopId]/page.tsx`
+
+**Acceptance criteria:**
+- Reopening a saved loop restores material, summary, memorables, flashcards, handoff, and recent messages
+- Recent Loops can navigate into a specific `/loops/[loopId]`
+- New loops create stable IDs and persist locally
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Added client-side loop workspace persistence under `lib/session/` with a dedicated local-storage namespace for full loop state, including empty pre-start workspaces and full post-start `SessionState` restoration. `/loops/new` now creates a stable local loop ID, persists an empty workspace, and normalizes into `/loops/[loopId]` via client-side route replacement. The workspace now restores saved material/session state on reopen, and `SessionState` was extended with a non-breaking `handoffSummary` field so future study artifacts can restore alongside summaries, memorables, flashcards, and messages. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.3 — Sources Section + Session Start Flow `[x]`
+
+**What gets built:**
+- Sources/material panel for entering and viewing the primary source text
+- Start-loop flow wired to `/api/session/start`
+- Session seed creation, classifier output, persona, and serialized vectors stored into workspace state
+- Clear pre-start and post-start sources UI states
+
+**Behavior expectations:**
+- Before start: user can paste material and begin a loop
+- After start: source material remains visible/readable in the sources section
+- Subject, subtopic, confidence, and persona become available to the rest of the workspace
+
+**Files to create/modify:**
+- sources section UI components
+- workspace state helpers in `lib/session/`
+- `/api/session/start` integration in the workspace client flow
+
+**Acceptance criteria:**
+- User can paste material and start a loop from the workspace
+- `/api/session/start` response is stored into the active loop state
+- Sources section clearly shows the active material and core classification context
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Reworked the `Sources` panel into a real pre-start/post-start flow. Before start, the workspace now accepts pasted material and calls `/api/session/start`; after start, it stores the returned session seed into the active local workspace, updates recent-loop metadata, and surfaces subject, subtopic, confidence, persona, vector readiness, and readable source material in the panel. Verified the new route and client flow compile successfully with `npm run build` ✓.
+
+---
+
+## Phase 9.3.4 — Chat Section + Thinking/Streaming `[x]`
+
+**What gets built:**
+- Chat panel with message list, input composer, submit controls, and scrolling behavior
+- SSE integration for `/api/session/ask`
+- Visible `thinking` states in chat based on existing user-facing SSE thinking events
+- Assistant/user message rendering with persisted message history updates
+
+**Behavior expectations:**
+- Ask flow streams chunks into the active assistant message
+- `thinking` events appear as transient status UI, not permanent messages
+- Final `complete` payload updates `recentMessages`, `rollingSum`, `tokenCount`, `intent`, and intent-specific fields
+- Compression results remain internal to workspace state, while user-visible warnings are surfaced in UI
+
+**Files to create/modify:**
+- chat section UI components
+- SSE parsing helpers in `lib/session/` or `lib/utils/`
+- `/api/session/ask` integration in the workspace client flow
+
+**Acceptance criteria:**
+- User can ask questions and see streamed answers in chat
+- Thinking states render during classification, retrieval, and generation
+- QA, summarize, memorables, and flashcards can all arrive through the ask route when intent-routed
+- Topic-shift results are surfaced in the chat UI when relevant
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Replaced the chat placeholder with a real `LoopChatPanel` client component wired to `/api/session/ask`. Added SSE parsing and ask-route integration helpers under `lib/session/askStream.ts`, plus shared typed ask-complete event shapes in `types/session.ts`. The chat panel now streams chunks into the active assistant bubble, shows transient `thinking` states, persists `recentMessages`/`rollingSum`/`tokenCount` updates back into local loop state, updates summary/memorables/flashcards when returned through intent-routed ask flows, and surfaces topic-shift notices and basic token/compression status notes in the UI. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.5 — Chat UX Polish: Intent, Topic Shift, Token Signals `[x]`
+
+**What gets built:**
+- UI treatment for intent-aware results in chat
+- Topic-shift notices when the question leaves the current subject
+- Token usage and warning display using `tokenCount`, `shouldWarn`, and compression signals
+- Stable rendering rules for non-QA assistant events so structured outputs do not bloat the transcript
+
+**Behavior expectations:**
+- Non-QA ask results show compact chat confirmations plus updates in tools/state
+- Topic-shift messaging is visible but non-disruptive
+- Token pressure warnings are visible near chat or workspace status, not buried
+
+**Acceptance criteria:**
+- Intent-routed summarize, memorables, and flashcards requests feel coherent in chat
+- Token warnings are visible when returned
+- Topic shift is understandable and connected to the active loop subject
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Polished the chat UI so intent-routed summarize, memorables, and flashcards requests render as compact assistant transcript events plus a separate “latest result” preview block instead of dumping full structured output into the conversation. Added clearer topic-shift messaging tied to the active loop subject, plus visible token-usage/status treatment in the chat header and stronger token/compression warning styling near the composer. Message rendering now distinguishes non-QA assistant events with dedicated labels and compact state-oriented copy. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.6 — Tools Panel Template + Summary Integration `[x]`
+
+**What gets built:**
+- Single tools panel with action cards/buttons for Summary, Memorables, Flashcards, and Handoff
+- Summary tool wired first, including `/api/session/summarize` SSE handling
+- Summary result section rendered inside the tools area and persisted into `SessionState.summary`
+
+**Behavior expectations:**
+- Tools are explicit UI actions, not hidden behind tabs
+- Summary can be triggered directly even though it may also be intent-routed through chat
+- Streamed summary output appears in the tools panel
+
+**Files to create/modify:**
+- tools panel UI components
+- summary result rendering components
+- `/api/session/summarize` integration in the workspace client flow
+
+**Acceptance criteria:**
+- Summary action triggers `/api/session/summarize`
+- Summary thinking/chunk events render correctly
+- Finished summary persists and restores on reopen
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Replaced the static tools placeholder with an explicit `LoopToolsPanel` client component and added tool-route client helpers under `lib/session/toolClients.ts`. The Summary action now calls `/api/session/summarize`, renders `thinking` and streamed chunk output directly inside the tools area, and persists the finished summary back into `SessionState.summary` so it restores on reopen. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.7 — Memorables + Flashcards + Handoff Integration `[x]`
+
+**What gets built:**
+- Memorables action wired to `/api/session/memorables`
+- Flashcards action wired to `/api/session/flashcards`
+- Handoff action wired to `/api/session/handoff`
+- Dedicated result sections in the tools panel for each tool
+- Full persistence and restore behavior for all tool outputs
+
+**Behavior expectations:**
+- Each tool writes to its own area in workspace state
+- Tool results are visible outside the chat transcript
+- Chat-triggered and button-triggered tool outputs stay consistent with the same stored state
+
+**Acceptance criteria:**
+- Memorables render as a distinct list
+- Flashcards render as structured front/back cards
+- Handoff renders as a concise reusable loop handoff block
+- All three restore after reload/reopen
+
+**Test commands:**
+```bash
+npm run dev   # manual browser verification
+npm run build
+```
+
+**Completion notes:** Wired explicit Tools actions for Memorables, Flashcards, and Handoff to `/api/session/memorables`, `/api/session/flashcards`, and `/api/session/handoff`. Added dedicated tools-panel result sections for the memorables list, structured flashcards, and concise handoff block, all backed by `SessionState` persistence so button-triggered and chat-triggered outputs stay consistent and restore after reload/reopen. Verified with `npm run build` ✓.
+
+---
+
+## Phase 9.3.8 — Recent Loops Integration + Route Normalization Completion `[ ]`
+
+**What gets built:**
+- Recent Loops page updated so cards and `New Loop` route to `/loops/[loopId]`
+- `/session` removed from the active Phase 9 flow or converted to redirect-only behavior
+- Recent-loop metadata refreshed from full workspace activity, including `updatedAt`
+
+**Behavior expectations:**
+- Resuming from `/loops` lands in the actual workspace route
+- Loop metadata stays fresh as the user chats or runs tools
+- Phase 9 route story becomes internally consistent
+
+**Acceptance criteria:**
+- `/loops` opens existing loops at `/loops/[loopId]`
+- `New Loop` creates and opens a real workspace route
+- No Phase 9 UI path depends on `/session` anymore
 
 **Test commands:**
 ```bash

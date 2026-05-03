@@ -26,7 +26,16 @@ export interface SessionState {
   recentMessages: Message[];
   rollingSum: string;
   tokenCount: number;
+  handoffSummary: string | null;
   previousSessionSummary: string | null;
+}
+
+export interface LoopWorkspaceState {
+  loopId: string;
+  materialDraft: string;
+  sessionState: SessionState | null;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface Flashcard {
@@ -55,6 +64,49 @@ export interface IntentClassificationResult {
   intent: StudyIntent;
   confidence: IntentConfidence;
 }
+
+export interface RetrievedChunk {
+  pageContent: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface AskCompleteEventBase {
+  intent: StudyIntent;
+  intentConfidence: IntentConfidence;
+  updatedMessages: Message[];
+  rollingSum: string;
+  tokenCount: number;
+  compressionApplied: boolean;
+  shouldWarn: boolean;
+}
+
+export interface QaAskCompleteEvent extends AskCompleteEventBase {
+  intent: 'qa';
+  answer: string;
+  retrievedChunks: RetrievedChunk[];
+  topicShift: TopicShiftResult;
+}
+
+export interface SummarizeAskCompleteEvent extends AskCompleteEventBase {
+  intent: 'summarize';
+  summary: string;
+}
+
+export interface MemorablesAskCompleteEvent extends AskCompleteEventBase {
+  intent: 'memorables';
+  memorables: string[];
+}
+
+export interface FlashcardsAskCompleteEvent extends AskCompleteEventBase {
+  intent: 'flashcards';
+  flashcards: Flashcard[];
+}
+
+export type AskCompleteEvent =
+  | QaAskCompleteEvent
+  | SummarizeAskCompleteEvent
+  | MemorablesAskCompleteEvent
+  | FlashcardsAskCompleteEvent;
 
 export interface ClassifierResult {
   subject: string;

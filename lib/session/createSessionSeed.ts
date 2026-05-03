@@ -37,6 +37,7 @@ export function createSessionSeed({
     rollingSum: '',
     // Start with a rough material-only token estimate; later phases will grow this with conversation state.
     tokenCount: estimateTokens(normalizedMaterial),
+    handoffSummary: null,
     previousSessionSummary,
   };
 }

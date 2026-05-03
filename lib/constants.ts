@@ -14,3 +14,4 @@ export const MEMORABLE_COUNT = { min: 5, max: 7 };
 export const FLASHCARD_COUNT = { min: 5, max: 10 };
 export const HANDOFF_BULLET_COUNT = { min: 3, max: 5 };
 export const RECENT_LOOPS_STORAGE_KEY = 'learnloop.recent-loops';
+export const LOOP_WORKSPACES_STORAGE_KEY = 'learnloop.loop-workspaces';

@@ -1,0 +1,89 @@
+- generic [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Back to recent loops" [ref=e6] [cursor=pointer]:
+          - /url: /loops
+          - img [ref=e7]
+        - link "LearnLoop Loop workspace" [ref=e9] [cursor=pointer]:
+          - /url: /loops
+          - img [ref=e11]
+          - generic [ref=e13]:
+            - paragraph [ref=e14]: LearnLoop
+            - paragraph [ref=e15]: Loop workspace
+      - generic [ref=e16]:
+        - generic [ref=e17]: Loop ID new
+        - button "Switch to dark mode" [active] [ref=e129] [cursor=pointer]:
+          - img [ref=e131]
+    - generic [ref=e19]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - paragraph [ref=e23]: Loop
+          - heading "Grounded study workspace" [level=1] [ref=e24]
+          - paragraph [ref=e25]: Chat through the material, keep your sources in view, and build study tools without leaving the loop.
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - paragraph [ref=e28]: Chat
+            - paragraph [ref=e29]: Streaming responses and thinking states land here next.
+          - generic [ref=e30]:
+            - paragraph [ref=e31]: Sources
+            - paragraph [ref=e32]: Material input and source management attach to this panel.
+          - generic [ref=e33]:
+            - paragraph [ref=e34]: Tools
+            - paragraph [ref=e35]: Summary, memorables, flashcards, and handoff live here.
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e39]:
+            - img [ref=e41]
+            - generic [ref=e43]:
+              - heading "Chat" [level=2] [ref=e44]
+              - paragraph [ref=e45]: Ask questions, summarize, and steer the loop.
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - generic [ref=e48]: Chat messages will stream into this workspace column.
+              - generic [ref=e49]: Thinking states and intent-aware actions will appear inline here.
+              - generic [ref=e50]: Topic shifts and token signals will stay close to the conversation.
+            - generic [ref=e51]:
+              - generic [ref=e52]:
+                - generic [ref=e53]: Ask a question
+                - generic [ref=e54]: Summarize this loop
+                - generic [ref=e55]: Create flashcards
+              - generic [ref=e56]: Message composer placeholder
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e60]:
+              - img [ref=e62]
+              - generic [ref=e66]:
+                - heading "Sources" [level=2] [ref=e67]
+                - paragraph [ref=e68]: Material and source previews will anchor the loop here.
+            - generic [ref=e69]:
+              - generic [ref=e70]: Source cards, material previews, and add-material actions land in this section in the next step.
+              - generic [ref=e71]:
+                - paragraph [ref=e72]: Workspace status
+                - paragraph [ref=e73]: This shell is route-ready and theme-aware, but not connected to session state yet.
+          - generic [ref=e74]:
+            - generic [ref=e76]:
+              - img [ref=e78]
+              - generic [ref=e81]:
+                - heading "Tools" [level=2] [ref=e82]
+                - paragraph [ref=e83]: Study outputs stay accessible without leaving the workspace.
+            - generic [ref=e84]:
+              - generic [ref=e85]:
+                - img [ref=e87]
+                - heading "Summary" [level=3] [ref=e91]
+                - paragraph [ref=e92]: Generate a compact summary of your current material and discussion.
+              - generic [ref=e93]:
+                - img [ref=e95]
+                - heading "Memorables" [level=3] [ref=e98]
+                - paragraph [ref=e99]: Pull out the standout ideas worth retaining after this loop.
+              - generic [ref=e100]:
+                - img [ref=e102]
+                - heading "Flashcards" [level=3] [ref=e106]
+                - paragraph [ref=e107]: Turn what you studied into quick front-and-back recall prompts.
+              - generic [ref=e108]:
+                - img [ref=e110]
+                - heading "Handoff" [level=3] [ref=e113]
+                - paragraph [ref=e114]: Capture the next-session handoff once this loop is ready to pause.
+  - button "Open Next.js Dev Tools" [ref=e120] [cursor=pointer]:
+    - img [ref=e121]
+  - alert [ref=e124]

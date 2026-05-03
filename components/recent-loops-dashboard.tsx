@@ -9,38 +9,38 @@ import { readRecentLoops, touchRecentLoop } from '@/lib/session/recentLoops';
 import type { RecentLoop } from '@/types/session';
 
 const DEMO_LOOPS: RecentLoop[] = [
-  {
-    loopId: 'demo-chemistry-stoichiometry',
-    title: 'Chemistry — Stoichiometry',
-    subject: 'Chemistry',
-    subtopic: 'Stoichiometry',
-    updatedAt: Date.now() - 1000 * 60 * 42,
-    sourceCount: 1,
-  },
-  {
-    loopId: 'demo-biology-cellular-respiration',
-    title: 'Biology — Cellular Respiration',
-    subject: 'Biology',
-    subtopic: 'Cellular respiration',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 5,
-    sourceCount: 1,
-  },
-  {
-    loopId: 'demo-history-industrial-revolution',
-    title: 'History — Industrial Revolution',
-    subject: 'History',
-    subtopic: 'Industrial Revolution',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 26,
-    sourceCount: 1,
-  },
-  {
-    loopId: 'demo-software-distributed-systems',
-    title: 'Software Engineering — Distributed Systems',
-    subject: 'Software Engineering',
-    subtopic: 'Distributed Systems',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
-    sourceCount: 1,
-  },
+  // {
+  //   loopId: 'demo-chemistry-stoichiometry',
+  //   title: 'Chemistry — Stoichiometry',
+  //   subject: 'Chemistry',
+  //   subtopic: 'Stoichiometry',
+  //   updatedAt: Date.now() - 1000 * 60 * 42,
+  //   sourceCount: 1,
+  // },
+  // {
+  //   loopId: 'demo-biology-cellular-respiration',
+  //   title: 'Biology — Cellular Respiration',
+  //   subject: 'Biology',
+  //   subtopic: 'Cellular respiration',
+  //   updatedAt: Date.now() - 1000 * 60 * 60 * 5,
+  //   sourceCount: 1,
+  // },
+  // {
+  //   loopId: 'demo-history-industrial-revolution',
+  //   title: 'History — Industrial Revolution',
+  //   subject: 'History',
+  //   subtopic: 'Industrial Revolution',
+  //   updatedAt: Date.now() - 1000 * 60 * 60 * 26,
+  //   sourceCount: 1,
+  // },
+  // {
+  //   loopId: 'demo-software-distributed-systems',
+  //   title: 'Software Engineering — Distributed Systems',
+  //   subject: 'Software Engineering',
+  //   subtopic: 'Distributed Systems',
+  //   updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
+  //   sourceCount: 1,
+  // },
 ];
 
 function formatUpdatedAt(timestamp: number) {
@@ -75,7 +75,7 @@ function LoopCard({ loop }: { loop: RecentLoop }) {
 
   return (
     <Link
-      href={`/session?loopId=${encodeURIComponent(loop.loopId)}`}
+      href={`/loops/${encodeURIComponent(loop.loopId)}`}
       onClick={() => {
         touchRecentLoop(loop.loopId);
       }}
@@ -155,7 +155,7 @@ export function RecentLoopsDashboard() {
           </div>
 
           <Link
-            href="/session"
+            href="/loops/new"
             className="group relative inline-flex self-start overflow-hidden rounded-full bg-foreground px-6 py-3.5 text-[0.95rem] font-semibold text-background sm:mt-1 dark:bg-white dark:text-[#081018]"
           >
             <span className="inline-flex items-center gap-3 transition-all duration-300 group-hover:-translate-y-10 group-hover:opacity-0">
@@ -174,24 +174,24 @@ export function RecentLoopsDashboard() {
             {Array.from({ length: 4 }, (_, index) => (
               <div
                 key={index}
-                className="h-56 rounded-[28px] border border-[#d6e8e5] bg-[linear-gradient(135deg,rgba(251,255,255,0.94)_0%,rgba(242,248,246,0.92)_100%)] dark:border-[#0f1e2e] dark:bg-[#090f18]/80"
+                className="h-56 rounded-[28px] border border-[#d6e8e5] bg-[linear-gradient(135deg,rgba(251,255,255,0.94)_0%,rgba(242,248,246,0.92)_100%)] dark:border-[#0f1e2e] dark:bg-none dark:bg-[linear-gradient(180deg,#0b1420_0%,#09111b_100%)]"
               />
             ))}
           </div>
         ) : loops.length === 0 ? (
-          <section className="rounded-[32px] border border-dashed border-[#cde4e0] bg-[linear-gradient(180deg,rgba(246,251,250,0.96)_0%,rgba(239,247,245,0.98)_100%)] px-8 py-16 text-center sm:px-12 dark:border-[#123041] dark:bg-[#090f18]/80">
-            <p className="mb-3 font-mono text-[10px] tracking-[0.3em] text-[#2f9f9a] uppercase opacity-90 dark:text-[#4FB7B3] dark:opacity-65">
+          <section className="rounded-[32px] border border-dashed border-[#cde4e0] bg-[linear-gradient(180deg,rgba(246,251,250,0.96)_0%,rgba(239,247,245,0.98)_100%)] px-8 py-16 text-center sm:px-12 dark:border-white/15 dark:bg-none dark:bg-[linear-gradient(180deg,#0b1420_0%,#09111b_100%)] dark:shadow-[0_14px_40px_rgba(2,12,24,0.24),inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <p className="mb-3 font-mono text-[10px] tracking-[0.3em] text-[#2f9f9a] uppercase opacity-90 dark:text-[#6dd4cf] dark:opacity-100">
               No saved loops
             </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-foreground dark:text-[#dce8f8]">
+            <h2 className="text-3xl font-semibold tracking-tight text-foreground">
               Start your first loop.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-[1.9] text-[#5e7279] sm:text-base dark:text-[#4e6a88]">
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-[1.9] text-muted-foreground sm:text-base">
               Create a new loop to turn your material into a grounded summary, live recall chat,
               flashcards, memorables, and a handoff for next time.
             </p>
             <Link
-              href="/session"
+              href="/loops/new"
               className="group relative mt-8 inline-flex overflow-hidden rounded-full bg-foreground px-6 py-3.5 text-sm font-semibold text-background dark:bg-white dark:text-[#081018]"
             >
               <span className="inline-flex items-center gap-3 transition-all duration-300 group-hover:-translate-y-10 group-hover:opacity-0">
