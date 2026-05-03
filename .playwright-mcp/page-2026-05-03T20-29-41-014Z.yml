@@ -1,0 +1,110 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link [ref=e4] [cursor=pointer]:
+        - /url: /loops
+        - img [ref=e6]
+      - generic [ref=e8]:
+        - link "Unstarted loop Set up your loop" [ref=e10] [cursor=pointer]:
+          - /url: /loops
+          - generic [ref=e11]:
+            - paragraph [ref=e12]: Unstarted loop
+            - paragraph [ref=e13]: Set up your loop
+        - button "Switch to dark mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e27]:
+          - img [ref=e29]
+          - generic [ref=e33]:
+            - heading "Loop Context" [level=2] [ref=e34]
+            - paragraph [ref=e35]: Material, classification, and active loop context stay grounded here.
+        - generic [ref=e36]:
+          - generic [ref=e37]: Paste the primary material for this loop. Starting the loop will classify the topic, build a persona, and prepare retrieval vectors for later chat.
+          - generic [ref=e38]:
+            - text: Primary material
+            - textbox "Primary material" [ref=e39]:
+              - /placeholder: Paste lecture notes, a transcript, an article, or any study material here.
+            - generic [ref=e40]:
+              - paragraph [ref=e41]: No material added yet
+              - button "Start loop" [disabled]
+          - generic [ref=e42]:
+            - paragraph [ref=e43]: Workspace status
+            - paragraph [ref=e44]: This loop already has a stable local ID and will be restored here once session state is created.
+      - generic [ref=e45]:
+        - generic [ref=e47]:
+          - img [ref=e49]
+          - generic [ref=e51]:
+            - heading "Chat" [level=2] [ref=e52]
+            - paragraph [ref=e53]: Ask questions, summarize, and steer the loop.
+        - generic [ref=e54]:
+          - generic [ref=e57]: Start the loop from Loop Context to unlock grounded chat.
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: Awaiting first source
+              - generic [ref=e61]: Summarize this loop
+              - generic [ref=e62]: Create flashcards
+            - generic [ref=e63]:
+              - textbox "Start the loop from Loop Context to begin chatting." [disabled] [ref=e64]
+              - generic [ref=e65]:
+                - paragraph [ref=e66]: Chat stays disabled until the first source is started.
+                - button "Send" [disabled]:
+                  - img
+                  - img
+                  - text: Send
+      - generic [ref=e67]:
+        - generic [ref=e69]:
+          - img [ref=e71]
+          - generic [ref=e74]:
+            - heading "Artifacts" [level=2] [ref=e75]
+            - paragraph [ref=e76]: Generate study artifacts and keep the results organized outside the chat.
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - img [ref=e81]
+              - heading "Summary" [level=3] [ref=e85]
+              - paragraph [ref=e86]: Generate a compact summary of your current material and discussion.
+              - paragraph [ref=e87]: Available after the loop starts
+              - button "Run Summary" [disabled]
+            - generic [ref=e88]:
+              - img [ref=e90]
+              - heading "Memorables" [level=3] [ref=e93]
+              - paragraph [ref=e94]: Pull out the standout ideas worth retaining after this loop.
+              - paragraph [ref=e95]: Available after the loop starts
+              - button "Run Memorables" [disabled]
+            - generic [ref=e96]:
+              - img [ref=e98]
+              - heading "Flashcards" [level=3] [ref=e102]
+              - paragraph [ref=e103]: Turn what you studied into quick front-and-back recall prompts.
+              - paragraph [ref=e104]: Available after the loop starts
+              - button "Run Flashcards" [disabled]
+            - generic [ref=e105]:
+              - img [ref=e107]
+              - heading "Handoff" [level=3] [ref=e110]
+              - paragraph [ref=e111]: Capture the next-session handoff once this loop is ready to pause.
+              - paragraph [ref=e112]: Available after the loop starts
+              - button "Run Handoff" [disabled]
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - img [ref=e116]
+                - heading "Summary" [level=3] [ref=e118]
+              - paragraph [ref=e119]: No summary generated yet. Use the explicit Summary action or ask for one in chat.
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - img [ref=e122]
+                - heading "Memorables" [level=3] [ref=e125]
+              - paragraph [ref=e126]: No memorables generated yet.
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - img [ref=e129]
+                - heading "Flashcards" [level=3] [ref=e141]
+              - paragraph [ref=e142]: No flashcards generated yet.
+            - generic [ref=e143]:
+              - generic [ref=e144]:
+                - img [ref=e145]
+                - heading "Handoff" [level=3] [ref=e148]
+              - paragraph [ref=e149]: No handoff generated yet.
+  - button "Open Next.js Dev Tools" [ref=e155] [cursor=pointer]:
+    - img [ref=e156]
+  - alert [ref=e159]

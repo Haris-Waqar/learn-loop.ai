@@ -232,7 +232,7 @@ export function LoopChatPanel({ sessionState, onSessionStateChange }: LoopChatPa
   const isDisabled = sessionState === null;
 
   return (
-    <section className="flex min-h-[32rem] flex-col rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
+    <section className="flex h-full min-h-[32rem] min-w-0 flex-col overflow-hidden rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
       <div className="flex items-center justify-between border-b border-border/70 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#4FB7B3]/12 text-[#2f9f9a] dark:bg-[#4FB7B3]/16 dark:text-[#79d8d4]">
@@ -291,7 +291,7 @@ export function LoopChatPanel({ sessionState, onSessionStateChange }: LoopChatPa
             {transcriptMessages.length === 0 && !pendingQuestion ? (
               <div className="rounded-2xl border border-dashed border-border bg-background/75 px-4 py-4 text-sm leading-7 text-muted-foreground">
                 {isDisabled
-                  ? 'Start the loop from Sources to unlock grounded chat.'
+                  ? 'Start the loop from Loop Context to unlock grounded chat.'
                   : 'Ask a question about the material or request a summary, memorables, or flashcards in natural language.'}
               </div>
             ) : null}
@@ -469,7 +469,7 @@ export function LoopChatPanel({ sessionState, onSessionStateChange }: LoopChatPa
               disabled={isDisabled || isSubmitting}
               placeholder={
                 isDisabled
-                  ? 'Start the loop from Sources to begin chatting.'
+                  ? 'Start the loop from Loop Context to begin chatting.'
                   : 'Ask about the material or request a summary, memorables, or flashcards.'
               }
               className="min-h-28 w-full resize-y rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground/80 focus:border-[#4FB7B3] focus:ring-4 focus:ring-[#4FB7B3]/15 disabled:cursor-not-allowed disabled:opacity-70"

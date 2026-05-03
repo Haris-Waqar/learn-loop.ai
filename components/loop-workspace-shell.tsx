@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft,
   Infinity,
   Layers3,
   LoaderCircle,
@@ -134,8 +133,8 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
 
   if (isHydrating || isRoutingNewLoop || !workspace) {
     return (
-      <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6">
+      <main className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+        <div className="mx-auto flex h-full w-full max-w-4xl items-center justify-center px-6">
           <div className="flex items-center gap-3 rounded-full border border-border bg-card px-5 py-3 text-sm text-muted-foreground shadow-sm">
             <LoaderCircle className="size-4 animate-spin" />
             {loopId === 'new' ? 'Preparing your new loop' : 'Restoring your loop'}
@@ -146,32 +145,24 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(79,183,179,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,214,170,0.12),transparent_22%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(79,183,179,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(29,78,216,0.14),transparent_24%)]" />
         <div className="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),transparent)] dark:bg-[linear-gradient(180deg,rgba(9,15,24,0.72),transparent)]" />
       </div>
 
-      <header className="sticky top-0 z-20 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 shrink-0 border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <Link
           href="/loops"
           className="absolute left-4 top-1/2 inline-flex -translate-y-1/2 shrink-0 items-center sm:left-6 lg:left-8"
         >
-          <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[#4FB7B3] text-white shadow-[0_10px_24px_rgba(79,183,179,0.24),0_0_28px_rgba(79,183,179,0.18),inset_0_1px_0_rgba(255,255,255,0.16)] ring-1 ring-white/8">
+          <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[#4FB7B3] text-white shadow-[0_6px_18px_rgba(7,16,24,0.24),0_0_18px_rgba(79,183,179,0.18),0_0_34px_rgba(79,183,179,0.1),inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-white/8">
             <Infinity className="size-5" strokeWidth={2.4} />
           </span>
         </Link>
 
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex w-full items-center justify-between gap-4 px-4 py-4 pl-18 sm:px-6 sm:pl-22 lg:px-8 lg:pl-24">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <Link
-              href="/loops"
-              className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              aria-label="Back to recent loops"
-            >
-              <ArrowLeft className="size-4" />
-            </Link>
-
             <Link href="/loops" className="min-w-0">
               <div className="min-w-0">
                 <p className="truncate text-lg font-semibold tracking-tight">{classificationLabel}</p>
@@ -188,25 +179,22 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.82fr)]">
-          <LoopChatPanel sessionState={activeSession} onSessionStateChange={handleSessionStateChange} />
-
-          <div className="grid gap-6">
-            <section className="rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
+      <div className="flex w-full flex-1 min-h-0 px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
+        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto lg:overflow-hidden lg:grid-cols-[minmax(300px,0.9fr)_minmax(0,1.1fr)] lg:auto-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.24fr)_minmax(340px,0.94fr)] xl:auto-rows-fr">
+          <section className="flex min-h-[28rem] flex-col overflow-hidden rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
               <div className="flex items-center justify-between border-b border-border/70 px-5 py-4 sm:px-6">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#ffd6aa]/30 text-[#b66a17] dark:bg-[#ffd6aa]/12 dark:text-[#f6b15b]">
                     <Layers3 className="size-5" />
                   </span>
                   <div>
-                    <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
-                    <p className="text-sm text-muted-foreground">Material and source previews anchor the loop here.</p>
+                    <h2 className="text-lg font-semibold tracking-tight">Loop Context</h2>
+                    <p className="text-sm text-muted-foreground">Material, classification, and active loop context stay grounded here.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4 p-5 sm:p-6">
+              <div className="flex-1 min-h-0 space-y-4 overflow-y-auto p-5 sm:p-6">
                 {!hasStarted ? (
                   <>
                     <div className="rounded-2xl border border-dashed border-border bg-background/75 px-4 py-5 text-sm leading-7 text-muted-foreground">
@@ -314,10 +302,11 @@ export function LoopWorkspaceShell({ loopId }: LoopWorkspaceShellProps) {
                   </p>
                 </div>
               </div>
-            </section>
+          </section>
 
-            <LoopToolsPanel sessionState={activeSession} onSessionStateChange={handleSessionStateChange} />
-          </div>
+          <LoopChatPanel sessionState={activeSession} onSessionStateChange={handleSessionStateChange} />
+
+          <LoopToolsPanel sessionState={activeSession} onSessionStateChange={handleSessionStateChange} />
         </div>
       </div>
     </main>

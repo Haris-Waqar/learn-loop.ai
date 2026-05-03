@@ -178,20 +178,20 @@ export function LoopToolsPanel({ sessionState, onSessionStateChange }: LoopTools
   }
 
   return (
-    <section className="rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
+    <section className="flex h-full min-h-[28rem] flex-col overflow-hidden rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:shadow-[0_18px_50px_rgba(2,6,23,0.28)] lg:col-span-2 xl:col-span-1">
       <div className="flex items-center justify-between border-b border-border/70 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-[#4FB7B3]/12 text-[#2f9f9a] dark:bg-[#4FB7B3]/16 dark:text-[#79d8d4]">
             <Wand2 className="size-5" />
           </span>
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Tools</h2>
-            <p className="text-sm text-muted-foreground">Run study actions directly and keep their outputs outside the transcript.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Artifacts</h2>
+            <p className="text-sm text-muted-foreground">Generate study artifacts and keep the results organized outside the chat.</p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-5 p-5 sm:p-6">
+      <div className="flex-1 min-h-0 space-y-5 overflow-y-auto p-5 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           {TOOL_CARDS.map(({ key, label, description, icon: Icon }) => {
             const isRunning = activeTool === key;

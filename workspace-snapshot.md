@@ -1,0 +1,13 @@
+- generic [active] [ref=e1] [box=0,0,1915,971]:
+  - main [ref=e2] [box=0,0,1915,971]:
+    - generic [ref=e3] [box=0,0,1915,81]:
+      - link [ref=e4] [cursor=pointer] [box=32,18,44,44]:
+        - /url: /loops
+      - generic [ref=e8] [box=0,0,1915,80]
+    - generic [ref=e24] [box=32,101,1851,850]:
+      - generic [ref=e25] [box=32,101,497,850]
+      - generic [ref=e45] [box=545,101,752,850]
+      - generic [ref=e67] [box=1313,101,570,850]
+  - button "Open Next.js Dev Tools" [ref=e155] [cursor=pointer] [box=22,917,32,32]:
+    - img [ref=e156] [box=22,913,40,40]
+  - alert [ref=e159] [box=-1,-1,1,1]
